@@ -2,14 +2,12 @@ const session = require("express-session");
 const pgSession = require("connect-pg-simple")(session);
 const pool = require("./db");
 
-
-console.log("--Session Loigc loaded--");
-
+console.log("--Session Logic loaded--");
 
 const sessionMiddleware = session({
   store: new pgSession({
-    pool: pool,
-    tableName: "session"
+    pool,
+    tableName: "session",
   }),
   secret: process.env.SESSION_SECRET,
   resave: false,
@@ -17,7 +15,7 @@ const sessionMiddleware = session({
   cookie: {
     httpOnly: true,
     secure: false,
-    maxAge: 1000 * 60 * 60 * 24,
+    maxAge: 1000 * 60 * 60 * 24, // 1 day
   },
 });
 
