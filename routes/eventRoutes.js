@@ -1,15 +1,15 @@
 const express = require("express");
-const router = express.Router();
 const pool = require("../config/db");
-const isauth = require("../middlewares/authMiddleware.js")
+const isAuth = require("../middlewares/authMiddleware");
 
+const router = express.Router();
 
-router.get("/",isauth ,async (req, res) => {
+router.get("/", isAuth, async (req, res) => {
   try {
     const result = await pool.query("SELECT title FROM events");
     res.json(result.rows);
   } catch (error) {
-    console.error(error);
+    console.error("Event fetch error:", error);
     res.status(500).json({ message: "Database error" });
   }
 });
