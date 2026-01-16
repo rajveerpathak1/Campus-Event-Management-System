@@ -23,7 +23,6 @@ const allowedOrigins = process.env.CORS_ORIGINS
 app.use(
   cors({
     origin: (origin, cb) => {
-      // Allow server-to-server, Postman, curl
       if (!origin) return cb(null, true);
 
       if (allowedOrigins.includes(origin)) {
@@ -60,6 +59,12 @@ console.log("studentRoute:", typeof studentRoute);
 console.log("adminRoute:", typeof adminRoute);
 console.log("superAdminRoute:", typeof superAdminRoute);
 
+
+app.use("/auth",authRoutes);
+app.use("/events",eventRoutes);
+app.use("/student",studentRoute);
+app.use("/admin",adminRoute);
+app.use("/superAdmin",superAdminRoute);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
