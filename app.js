@@ -1,78 +1,69 @@
 const express = require("express");
 const cors = require("cors");
-const session = require("./config/session");
+const helmet = require("helmet");
+const morgan = require("morgan");
 
 
-const eventRoutes = require("./routes/eventRoutes");
 const authRoutes = require("./routes/authRoutes");
-const studentRoute = require("./routes/studentRoutes");
-const adminRoute = require("./routes/adminRoutes");
-const superAdminRoute = require("./routes/superAdminRoutes");
+const eventRoutes = require("./routes/eventRoutes");
+const studentRoutes = require("./routes/studentRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const superAdminRoutes = require("./routes/superAdminRoutes");
 
-const app = express();
+const errorHandler = require("./middlewares/errorMiddleware");
 
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-
-const allowedOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(",").map(origin => origin.trim())
-  : [];
-
-app.use(
-  cors({
-    origin: (origin, cb) => {
-      if (!origin) return cb(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return cb(null, true);
-      }
-
-      console.error("Blocked by CORS:", origin);
-      const err = new Error("CORS not allowed");
-      err.status = 403;
-      cb(err);
-    },
-    credentials: true,
-  })
-);
-
-app.use(session);
+const createApp = ({ sessionMiddleware }) => {
+  const app = express();
 
 
-app.get("/", (req, res) => {
+  app.use(helmet());
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+
   if (process.env.NODE_ENV === "development") {
-    console.log("Server pinged");
+    app.use(morgan("dev"));
   }
 
-  res.status(200).json({
-    success: true,
-    message: "Campus Event Management API running",
+
+  const allowedOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(",").map(o => o.trim())
+    : [];
+
+  app.use(
+    cors({
+      origin: (origin, cb) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          return cb(null, true);
+        }
+        return cb(new Error("CORS not allowed"));
+      },
+      credentials: true,
+    })
+  );
+
+
+  if (sessionMiddleware) {
+    app.use(sessionMiddleware);
+  }
+
+  app.get("/", (req, res) => {
+    res.json({
+      success: true,
+      message: "Campus Event Management API running",
+    });
   });
-});
-
-console.log("session:", typeof session);
-console.log("authRoutes:", typeof authRoutes);
-console.log("eventRoutes:", typeof eventRoutes);
-console.log("studentRoute:", typeof studentRoute);
-console.log("adminRoute:", typeof adminRoute);
-console.log("superAdminRoute:", typeof superAdminRoute);
 
 
-app.use("/auth",authRoutes);
-app.use("/events",eventRoutes);
-app.use("/student",studentRoute);
-app.use("/admin",adminRoute);
-app.use("/superAdmin",superAdminRoute);
+  app.use("/auth", authRoutes);
+  app.use("/events", eventRoutes);
+  app.use("/students", studentRoutes);
+  app.use("/admin", adminRoutes);
+  app.use("/super-admin", superAdminRoutes);
 
-app.use((err, req, res, next) => {
-  console.error(err.stack);
 
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || "Internal Server Error",
-  });
-});
+  app.use(errorHandler);
 
-module.exports = app;
+  return app;
+};
+
+module.exports = createApp;

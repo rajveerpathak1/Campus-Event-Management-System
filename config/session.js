@@ -1,21 +1,26 @@
 const session = require("express-session");
-const pgSession = require("connect-pg-simple")(session);
-const pool = require("./db");
+const PgSession = require("connect-pg-simple")(session);
+const { getDB } = require("./db");
 
-const sessionMiddleware = session({
-  store: new pgSession({
-    pool,
-    tableName: "session",
-  }),
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 1000 * 60 * 60 * 24,
-  },
-});
+const createSessionMiddleware = () => {
+  return session({
+    name: "campus.sid",
+    store: new PgSession({
+      pool: getDB(),
+      tableName: "session",
+      createTableIfMissing: true,
+    }),
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    proxy: process.env.NODE_ENV === "production",
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24,
+    },
+  });
+};
 
-module.exports = sessionMiddleware;
+module.exports = createSessionMiddleware;
