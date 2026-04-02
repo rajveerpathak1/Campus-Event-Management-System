@@ -200,8 +200,25 @@ Create a `.env` file with the following variables:
 
 ```
 PORT=5000
+NODE_ENV=development
+
+# Database (PostgreSQL)
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=campus_event_db
+DB_USER=postgres
+DB_PASSWORD=your_db_password
+
+# Sessions
 SESSION_SECRET=your_secret_key
+
+# CORS (comma-separated origins)
+CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 ```
+
+Before running the server the first time (or after clearing your DB), run:
+
+`npm run migrate`
 
 ---
 

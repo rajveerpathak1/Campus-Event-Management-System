@@ -27,7 +27,7 @@ exports.getAllEvents = async (req, res) => {
 
 /* ==================== GET SINGLE EVENT ==================== */
 exports.getEventById = async (req, res) => {
-  const event = await EventModel.getEventById(req.params.id);
+  const event = await EventModel.getEventByIdAdmin(req.params.id);
 
   if (!event || event.is_deleted) {
     return res.status(404).json({

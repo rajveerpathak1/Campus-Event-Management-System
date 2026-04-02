@@ -1,26 +1,54 @@
 const { getDB } = require("../config/db");
 
 
-const searchEvents = async ({ search, limit }) => {
+const searchEvents = async ({ search, limit, offset }) => {
   const db = getDB();
 
   const result = await db.query(
-    `SELECT id, title
+    `SELECT
+       id,
+       title,
+       event_date,
+       capacity,
+       status,
+       COUNT(*) OVER() AS total_count
      FROM events
-     WHERE title ILIKE $1
-     ORDER BY id DESC
-     LIMIT $2`,
-    [`${search}%`, limit]
+     WHERE is_deleted = false
+       AND status = 'published'
+       AND title ILIKE $1
+     ORDER BY event_date DESC
+     LIMIT $2 OFFSET $3`,
+    [`${search}%`, limit, offset]
   );
 
-  return result.rows;
+  const rows = result.rows;
+  const total = rows[0]?.total_count || 0;
+
+  return { rows, total };
 };
 
-const getEventById = async (id) => {
+// Admin view: includes drafts/published/cancelled (but still allows admin to enforce is_deleted checks).
+const getEventByIdAdmin = async (id) => {
   const db = getDB();
 
   const result = await db.query(
     "SELECT * FROM events WHERE id = $1",
+    [id]
+  );
+
+  return result.rows[0];
+};
+
+// Student view: only published and not deleted.
+const getEventByIdStudent = async (id) => {
+  const db = getDB();
+
+  const result = await db.query(
+    `SELECT *
+     FROM events
+     WHERE id = $1
+       AND is_deleted = false
+       AND status = 'published'`,
     [id]
   );
 
@@ -119,7 +147,8 @@ const updateEventStatusAdmin = async (id, status, allowedStatuses) => {
 
 module.exports = {
   searchEvents,
-  getEventById,
+  getEventByIdStudent,
+  getEventByIdAdmin,
 
   // admin exports
   getAllEventsAdmin,

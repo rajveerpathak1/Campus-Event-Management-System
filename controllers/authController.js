@@ -1,35 +1,29 @@
 const bcrypt = require("bcrypt");
-
-
 const asyncHandler = require("../utils/asyncHandler");
-
 
 const {
   findUserByEmail,
   createUser,
+  findUserById,
 } = require("../models/userModel");
 
-
-
+const ApiError = require("../utils/ApiError");
 
 /* -------------------- SIGN UP -------------------- */
 exports.signUp = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
   if (!name || !email || !password) {
-    const err = new Error("All fields are required");
-    err.status = 400;
-    throw err;
+    throw new ApiError(400, "name, email, and password are required");
   }
 
   const existingUser = await findUserByEmail(email);
   if (existingUser) {
-    const err = new Error("User already exists");
-    err.status = 409;
-    throw err;
+    throw new ApiError(409, "User already exists");
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const saltRounds = Number(process.env.BCRYPT_ROUNDS) || 10;
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
 
   const user = await createUser({
     name,
@@ -41,58 +35,60 @@ exports.signUp = asyncHandler(async (req, res) => {
   res.status(201).json({
     success: true,
     message: "User registered successfully",
-    user,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
   });
 });
-
-
 
 /* -------------------- LOGIN -------------------- */
 exports.login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    const err = new Error("Email and password required");
-    err.status = 400;
-    throw err;
+    throw new ApiError(400, "email and password are required");
   }
 
   const user = await findUserByEmail(email);
   if (!user) {
-    const err = new Error("Invalid credentials");
-    err.status = 401;
-    throw err;
+    throw new ApiError(401, "Invalid credentials");
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    const err = new Error("Invalid credentials");
-    err.status = 401;
-    throw err;
+    throw new ApiError(401, "Invalid credentials");
   }
 
-  req.session.regenerate(err => {
-    if (err) {
-      throw err;
-    }
+  if (!req.session) {
+    throw new ApiError(500, "Session not initialized");
+  }
 
-    req.session.user = {
-      id: user.id,
-      role: user.role,
-    };
+  // ✅ Proper async wrapper for regenerate
+  await new Promise((resolve, reject) => {
+    req.session.regenerate(err => {
+      if (err) return reject(err);
 
-    res.status(200).json({
-      success: true,
-      message: "Login successful",
-      user: {
+      req.session.user = {
         id: user.id,
         role: user.role,
-      },
+      };
+
+      resolve();
     });
   });
+
+  res.status(200).json({
+    success: true,
+    message: "Login successful",
+    user: {
+      id: user.id,
+      role: user.role,
+    },
+  });
 });
-
-
 
 /* -------------------- LOGOUT -------------------- */
 exports.logout = asyncHandler(async (req, res) => {
@@ -106,16 +102,46 @@ exports.logout = asyncHandler(async (req, res) => {
 
   const user = { ...req.session.user };
 
-  req.session.destroy(err => {
-    if (err) {
-      throw err;
-    }
-
-    res.clearCookie("campus.sid");
-    res.status(200).json({
-      success: true,
-      message: "Logged out successfully",
-      user,
+  await new Promise((resolve, reject) => {
+    req.session.destroy(err => {
+      if (err) return reject(err);
+      resolve();
     });
+  });
+
+  res.clearCookie("campus.sid", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Logged out successfully",
+    user,
+  });
+});
+
+/* -------------------- GET ME -------------------- */
+exports.me = asyncHandler(async (req, res) => {
+  const sessionUser = req.user;
+
+  if (!sessionUser?.id) {
+    throw new ApiError(401, "Not authenticated");
+  }
+
+  const user = await findUserById(sessionUser.id);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  res.status(200).json({
+    success: true,
+    data: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
   });
 });
