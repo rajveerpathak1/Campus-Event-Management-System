@@ -145,6 +145,35 @@ const updateEventStatusAdmin = async (id, status, allowedStatuses) => {
   );
 };
 
+
+// 🔥 Get events registered by a student
+const getMyRegistrations = async (userId) => {
+  const db = getDB();
+
+  const result = await db.query(
+    `
+    SELECT 
+      e.id,
+      e.title,
+      e.description,
+      e.event_date,
+      e.capacity,
+      e.status,
+      COUNT(r2.id) AS registered_count
+    FROM registrations r
+    JOIN events e ON e.id = r.event_id
+    LEFT JOIN registrations r2 ON r2.event_id = e.id
+    WHERE r.user_id = $1
+      AND e.is_deleted = false
+    GROUP BY e.id
+    ORDER BY e.event_date DESC
+    `,
+    [userId]
+  );
+
+  return result.rows;
+};
+
 module.exports = {
   searchEvents,
   getEventByIdStudent,
@@ -156,4 +185,5 @@ module.exports = {
   updateEventAdmin,
   softDeleteEventAdmin,
   updateEventStatusAdmin,
+  getMyRegistrations,
 };

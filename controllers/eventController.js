@@ -8,10 +8,15 @@ const {
   unregisterForEvent: unregisterForEventService,
 } = require("../models/registrationModel");
 
+// 🔥 renamed to avoid conflict
+const {
+  getMyRegistrations: getMyRegistrationsFromModel,
+} = require("../models/eventModel");
+
 const ApiError = require("../utils/ApiError");
 
 /* -------------------- GET EVENTS -------------------- */
-exports.getEvents = asyncHandler(async (req, res) => {
+const getEvents = asyncHandler(async (req, res) => {
   let { search = "", limit = 10, page = 1 } = req.query;
 
   limit = Math.min(50, Math.max(1, Number(limit) || 10));
@@ -32,7 +37,7 @@ exports.getEvents = asyncHandler(async (req, res) => {
 });
 
 /* -------------------- GET EVENT -------------------- */
-exports.getEvent = asyncHandler(async (req, res) => {
+const getEvent = asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
   if (!id) throw new ApiError(400, "Invalid event ID");
 
@@ -43,7 +48,7 @@ exports.getEvent = asyncHandler(async (req, res) => {
 });
 
 /* -------------------- REGISTER -------------------- */
-exports.registerForEvent = asyncHandler(async (req, res) => {
+const registerForEvent = asyncHandler(async (req, res) => {
   const userId = req.user?.id;
   const eventId = Number(req.params.id);
 
@@ -60,7 +65,7 @@ exports.registerForEvent = asyncHandler(async (req, res) => {
 });
 
 /* -------------------- MY REGISTRATIONS -------------------- */
-exports.getMyRegistrations = asyncHandler(async (req, res) => {
+const getMyRegistrations = asyncHandler(async (req, res) => {
   const userId = req.user?.id;
   if (!userId) throw new ApiError(401, "Not authenticated");
 
@@ -74,7 +79,7 @@ exports.getMyRegistrations = asyncHandler(async (req, res) => {
 });
 
 /* -------------------- ALL REGISTRATIONS -------------------- */
-exports.getAllRegistrations = asyncHandler(async (req, res) => {
+const getAllRegistrations = asyncHandler(async (req, res) => {
   let { eventId, page = 1, limit = 20 } = req.query;
 
   page = Math.max(1, Number(page) || 1);
@@ -97,7 +102,7 @@ exports.getAllRegistrations = asyncHandler(async (req, res) => {
 });
 
 /* -------------------- UNREGISTER -------------------- */
-exports.unregisterFromEvent = asyncHandler(async (req, res) => {
+const unregisterFromEvent = asyncHandler(async (req, res) => {
   const userId = req.user?.id;
   const eventId = Number(req.params.id);
 
@@ -112,3 +117,35 @@ exports.unregisterFromEvent = asyncHandler(async (req, res) => {
     data: result,
   });
 });
+
+/* -------------------- MY REGISTRATIONS (ALT CONTROLLER) -------------------- */
+const getMyRegistrationsController = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const events = await getMyRegistrationsFromModel(userId);
+
+    res.status(200).json({
+      success: true,
+      count: events.length,
+      data: events,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch registrations",
+    });
+  }
+};
+
+/* -------------------- EXPORTS -------------------- */
+module.exports = {
+  getEvents,
+  getEvent,
+  registerForEvent,
+  unregisterFromEvent,
+  getMyRegistrations,
+  getAllRegistrations,
+  getMyRegistrationsController,
+};
