@@ -12,7 +12,7 @@ const createSessionMiddleware = () => {
   const isProd = process.env.NODE_ENV === "production";
 
   return session({
-    name: `${process.env.NODE_ENV || "dev"}.campus.sid`,
+    name: "campus.sid",
 
     store: new PgSession({
       pool,
