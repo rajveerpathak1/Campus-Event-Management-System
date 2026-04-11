@@ -13,7 +13,6 @@ const createSessionMiddleware = () => {
 
   return session({
     name: "campus.sid",
-
     store: new PgSession({
       pool,
       tableName: "session",
@@ -27,7 +26,7 @@ const createSessionMiddleware = () => {
     saveUninitialized: false,
     rolling: true,
 
-    proxy: isProd,
+    proxy: true,
 
     cookie: {
       httpOnly: true,

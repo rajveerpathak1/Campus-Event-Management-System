@@ -54,6 +54,11 @@ const createApp = ({ sessionMiddleware }) => {
     })
   );
 
+  app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
+
   //  Rate limiting
   app.use(
     rateLimit({
