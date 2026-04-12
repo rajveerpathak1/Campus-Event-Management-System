@@ -76,12 +76,12 @@ exports.login = asyncHandler(async (req, res) => {
     });
   });
 
-  // 🔥 Step 4: FORCE COOKIE SET (THIS WAS MISSING)
-  res.cookie("campus.sid", req.sessionID, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-  });
+  // // 🔥 Step 4: FORCE COOKIE SET (THIS WAS MISSING)
+  // res.cookie("campus.sid", req.sessionID, {
+  //   httpOnly: true,
+  //   secure: true,
+  //   sameSite: "none",
+  // });
 
   res.status(200).json({
     success: true,
