@@ -66,20 +66,29 @@ exports.login = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Session not initialized");
   }
 
-  // ✅ Proper async wrapper for regenerate
+  // 🔥 Step 1: regenerate session
   await new Promise((resolve, reject) => {
     req.session.regenerate(err => {
       if (err) return reject(err);
-
-      req.session.user = {
-        id: user.id,
-        role: user.role,
-      };
-
       resolve();
     });
   });
 
+  // 🔥 Step 2: set user
+  req.session.user = {
+    id: user.id,
+    role: user.role,
+  };
+
+  // 🔥 Step 3: FORCE SAVE SESSION (THIS WAS MISSING)
+  await new Promise((resolve, reject) => {
+    req.session.save(err => {
+      if (err) return reject(err);
+      resolve();
+    });
+  });
+
+  // ✅ NOW response
   res.status(200).json({
     success: true,
     message: "Login successful",
@@ -111,8 +120,8 @@ exports.logout = asyncHandler(async (req, res) => {
 
   res.clearCookie("campus.sid", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
   });
 
   res.status(200).json({
