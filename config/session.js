@@ -26,11 +26,11 @@ const createSessionMiddleware = () => {
     saveUninitialized: false,
     rolling: true,
 
-    proxy: true,
+    proxy: isProd,
 
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: isProd,
       sameSite: isProd ? "none" : "lax",
       maxAge: 1000 * 60 * 60 * 24, // 1 day
     },
