@@ -31,7 +31,7 @@ const createSessionMiddleware = () => {
     cookie: {
       httpOnly: true,
       secure: true,
-      sameSite: "none",
+      sameSite: isProd ? "none" : "lax",
       maxAge: 1000 * 60 * 60 * 24, // 1 day
     },
   });
