@@ -1,24 +1,42 @@
 const { getDB } = require("../config/db");
 
 
-const searchEvents = async ({ search, limit, offset }) => {
+const searchEvents = async ({ search, limit, offset, userId }) => {
   const db = getDB();
 
   const result = await db.query(
-    `SELECT
-       id,
-       title,
-       event_date,
-       capacity,
-       status,
-       COUNT(*) OVER() AS total_count
-     FROM events
-     WHERE is_deleted = false
-       AND status = 'published'
-       AND title ILIKE $1
-     ORDER BY event_date DESC
-     LIMIT $2 OFFSET $3`,
-    [`${search}%`, limit, offset]
+    `
+    SELECT
+      e.id,
+      e.title,
+      e.description,
+      e.event_date,
+      e.capacity,
+      e.status,
+
+      COUNT(r.id)::int AS "registeredCount",
+
+      EXISTS (
+        SELECT 1
+        FROM registrations r2
+        WHERE r2.event_id = e.id AND r2.user_id = $4
+      ) AS "isRegistered",
+
+      COUNT(*) OVER() AS total_count
+
+    FROM events e
+    LEFT JOIN registrations r ON r.event_id = e.id
+
+    WHERE e.is_deleted = false
+      AND e.status = 'published'
+      AND e.title ILIKE $1
+
+    GROUP BY e.id
+    ORDER BY e.event_date DESC
+
+    LIMIT $2 OFFSET $3
+    `,
+    [`${search}%`, limit, offset, userId || null]
   );
 
   const rows = result.rows;

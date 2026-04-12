@@ -24,7 +24,14 @@ const getEvents = asyncHandler(async (req, res) => {
 
   const offset = (page - 1) * limit;
 
-  const result = await searchEvents({ search, limit, offset });
+  const userId = req.user?.id || null; // 🔥 IMPORTANT
+
+  const result = await searchEvents({
+    search,
+    limit,
+    offset,
+    userId,
+  });
 
   res.status(200).json({
     success: true,
