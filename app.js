@@ -20,7 +20,11 @@ const createApp = ({ sessionMiddleware }) => {
   app.set("trust proxy", 1);
 
   //  Security & parsing
-  app.use(helmet());
+ app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+  })
+);
   app.use(express.json({ limit: "10kb" }));
   app.use(express.urlencoded({ extended: true }));
   app.use(compression());
@@ -54,10 +58,10 @@ const createApp = ({ sessionMiddleware }) => {
     })
   );
 
-  app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Credentials", "true");
-  next();
-});
+//   app.use((req, res, next) => {
+//   res.header("Access-Control-Allow-Credentials", "true");
+//   next();
+// });
 
   //  Rate limiting
   app.use(
