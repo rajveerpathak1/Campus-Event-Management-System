@@ -54,39 +54,32 @@ exports.login = asyncHandler(async (req, res) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new ApiError(401, "Invalid credentials");
 
-  // 🔥 Step 1: destroy old session FIRST (important)
+  if (!req.session) {
+    throw new ApiError(500, "Session not initialized");
+  }
+
+  // 🔥 CRITICAL FIX START
   await new Promise((resolve, reject) => {
     req.session.regenerate(err => {
       if (err) return reject(err);
-      resolve();
+
+      req.session.user = {
+        id: user.id,
+        role: user.role,
+      };
+
+      // 🔥 THIS LINE FIXES YOUR ENTIRE BUG
+      req.session.save(err => {
+        if (err) return reject(err);
+        resolve();
+      });
     });
   });
-
-  // 🔥 Step 2: set user
-  req.session.user = {
-    id: user.id,
-    role: user.role,
-  };
-
-  // 🔥 Step 3: save session
-  await new Promise((resolve, reject) => {
-    req.session.save(err => {
-      if (err) return reject(err);
-      resolve();
-    });
-  });
-
-  // // 🔥 Step 4: FORCE COOKIE SET (THIS WAS MISSING)
-  // res.cookie("campus.sid", req.sessionID, {
-  //   httpOnly: true,
-  //   secure: true,
-  //   sameSite: "none",
-  // });
+  // 🔥 CRITICAL FIX END
 
   res.status(200).json({
     success: true,
     message: "Login successful",
-    user: req.session.user,
   });
 });
 
