@@ -8,6 +8,9 @@ const {
   updateUserRole,
 } = require("../models/userModel");
 
+// ✅ FIX: import getDB
+const { getDB } = require("../config/db");
+
 const router = express.Router();
 
 /* -------------------- CONSTANTS -------------------- */
@@ -33,6 +36,7 @@ const validateId = (id, res) => {
 };
 
 const preventSelfAction = (req, id, res, action) => {
+  // ✅ SAFE CHECK (no crash)
   if (!req.session?.user) {
     res.status(401).json({
       success: false,
@@ -145,10 +149,17 @@ router.delete(
     if (!validateId(id, res)) return;
     if (!preventSelfAction(req, id, res, "delete")) return;
 
+    // ✅ handle FK (important if user registered in events)
+    await db.query("BEGIN");
+
+    await db.query("DELETE FROM registrations WHERE user_id = $1", [id]);
+
     const result = await db.query(
       "DELETE FROM users WHERE id = $1 RETURNING *",
       [id]
     );
+
+    await db.query("COMMIT");
 
     if (result.rowCount === 0) {
       return res.status(404).json({
