@@ -48,25 +48,13 @@ exports.signUp = asyncHandler(async (req, res) => {
 exports.login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
-    throw new ApiError(400, "email and password are required");
-  }
-
   const user = await findUserByEmail(email);
-  if (!user) {
-    throw new ApiError(401, "Invalid credentials");
-  }
+  if (!user) throw new ApiError(401, "Invalid credentials");
 
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    throw new ApiError(401, "Invalid credentials");
-  }
+  if (!isMatch) throw new ApiError(401, "Invalid credentials");
 
-  if (!req.session) {
-    throw new ApiError(500, "Session not initialized");
-  }
-
-  // 🔥 Step 1: regenerate session
+  // 🔥 Step 1: destroy old session FIRST (important)
   await new Promise((resolve, reject) => {
     req.session.regenerate(err => {
       if (err) return reject(err);
@@ -80,7 +68,7 @@ exports.login = asyncHandler(async (req, res) => {
     role: user.role,
   };
 
-  // 🔥 Step 3: FORCE SAVE SESSION (THIS WAS MISSING)
+  // 🔥 Step 3: save session
   await new Promise((resolve, reject) => {
     req.session.save(err => {
       if (err) return reject(err);
@@ -88,14 +76,17 @@ exports.login = asyncHandler(async (req, res) => {
     });
   });
 
-  // ✅ NOW response
+  // 🔥 Step 4: FORCE COOKIE SET (THIS WAS MISSING)
+  res.cookie("campus.sid", req.sessionID, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
+
   res.status(200).json({
     success: true,
     message: "Login successful",
-    user: {
-      id: user.id,
-      role: user.role,
-    },
+    user: req.session.user,
   });
 });
 
