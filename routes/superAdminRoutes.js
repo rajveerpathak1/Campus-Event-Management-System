@@ -50,23 +50,20 @@ router.patch(
   "/users/:id/promote",
   asyncHandler(async (req, res) => {
     const id = Number(req.params.id);
-    const { role } = req.body;
 
-    if (!["student", "admin", "superAdmin"].includes(role)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid role",
-      });
-    }
+    // 🔥 FIX: hardcode role
+    const updatedUser = await updateUserRole(id, "admin");
 
-    const updatedUser = await updateUserRole(id, role);
     if (!updatedUser) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
 
     res.json({
       success: true,
-      message: "User role updated",
+      message: "User promoted to admin",
       data: updatedUser,
     });
   })
