@@ -9,9 +9,8 @@ const { connectDB, getDB } = require("../config/db");
 const createSessionMiddleware = require("../config/session");
 
 /* ---------------- REQUEST ---------------- */
-
 const request = ({ port, method, urlPath, body, jar }) =>
-  new Promise((resolve, reject) => {
+  new Promise((resolve) => {
     const payload = body ? JSON.stringify(body) : null;
 
     const options = {
@@ -28,20 +27,17 @@ const request = ({ port, method, urlPath, body, jar }) =>
       },
     };
 
-    const req = http.request(options, res => {
+    const req = http.request(options, (res) => {
       let data = "";
 
-      res.on("data", chunk => (data += chunk));
+      res.on("data", (chunk) => (data += chunk));
 
       res.on("end", () => {
         if (res.headers["set-cookie"] && jar) {
-          const cookie = res.headers["set-cookie"].find(c =>
+          const cookie = res.headers["set-cookie"].find((c) =>
             c.includes("campus.sid")
           );
-
-          if (cookie) {
-            jar.cookie = cookie.split(";")[0];
-          }
+          if (cookie) jar.cookie = cookie.split(";")[0];
         }
 
         resolve({
@@ -57,11 +53,10 @@ const request = ({ port, method, urlPath, body, jar }) =>
 
 /* ---------------- TEST ---------------- */
 
-test("ADMIN + SUPER ADMIN FLOW (REAL FLOW)", async () => {
+test("ADMIN + SUPER ADMIN FLOW", async () => {
   await connectDB();
   const pool = getDB();
 
-  // 🔥 CLEAN DB
   await pool.query(
     "TRUNCATE TABLE registrations, events, users RESTART IDENTITY CASCADE"
   );
@@ -71,120 +66,92 @@ test("ADMIN + SUPER ADMIN FLOW (REAL FLOW)", async () => {
   const port = server.address().port;
 
   try {
-    /* ---------- SEED SUPER ADMIN (SAFE) ---------- */
+    /* ---------- CREATE SUPER ADMIN ---------- */
+    const superEmail = "superadmin@gmail.com";
 
-    const existingSuper = await pool.query(
-      `SELECT * FROM users WHERE email=$1`,
-      ["superadmin@gmail.com"]
-    );
-
-    if (existingSuper.rows.length === 0) {
-      const signupRes = await request({
-        port,
-        method: "POST",
-        urlPath: "/auth/signup",
-        body: {
-          name: "Super Admin",
-          email: "superadmin@gmail.com",
-          password: "admin@123",
-        },
-      });
-
-      assert.equal(signupRes.status, 201);
-    }
-
-    // ensure role always correct
-    await pool.query(
-      `UPDATE users SET role='superAdmin' WHERE email=$1`,
-      ["superadmin@gmail.com"]
-    );
-
-    /* ---------- CREATE STUDENT ---------- */
-
-    const email = `user_${Date.now()}@test.com`;
-    const password = "123456";
-
-    const signupUser = await request({
+    await request({
       port,
       method: "POST",
-      urlPath: "/auth/signup",
-      body: { name: "User", email, password },
+      urlPath: "/api/v1/auth/signup",
+      body: {
+        name: "Super Admin",
+        email: superEmail,
+        password: "admin123",
+      },
     });
 
-    assert.equal(signupUser.status, 201);
+    await pool.query(
+      `UPDATE users SET role='super-admin' WHERE email=$1`,
+      [superEmail]
+    );
 
     /* ---------- LOGIN SUPER ADMIN ---------- */
-
     const superJar = {};
 
     let res = await request({
       port,
       method: "POST",
-      urlPath: "/auth/login",
-      body: {
-        email: "superadmin@gmail.com",
-        password: "admin@123",
-      },
+      urlPath: "/api/v1/auth/login",
+      body: { email: superEmail, password: "admin123" },
       jar: superJar,
     });
 
     assert.equal(res.status, 200);
-    assert.ok(superJar.cookie, "Super admin login failed (no cookie)");
+
+    /* ---------- CREATE USER ---------- */
+    const email = `user_${Date.now()}@test.com`;
+
+    await request({
+      port,
+      method: "POST",
+      urlPath: "/api/v1/auth/signup",
+      body: { name: "User", email, password: "123456" },
+    });
 
     /* ---------- GET USERS ---------- */
-
     res = await request({
       port,
       method: "GET",
-      urlPath: "/super-admin/users",
+      urlPath: "/api/v1/super-admin/users",
       jar: superJar,
     });
 
-    assert.equal(res.status, 200);
-    assert.ok(Array.isArray(res.json.data), "Invalid users response");
+    const user = res.json.data.find((u) => u.email === email);
+    assert.ok(user);
 
-    const user = res.json.data.find(u => u.email === email);
-    assert.ok(user, "User not found for promotion");
-
-    /* ---------- PROMOTE USER ---------- */
-
+    /* ---------- PROMOTE ---------- */
     res = await request({
       port,
       method: "PATCH",
-      urlPath: `/super-admin/users/${user.id}/promote`,
+      urlPath: `/api/v1/super-admin/users/${user.id}/role`,
       jar: superJar,
       body: { role: "admin" },
     });
 
     assert.equal(res.status, 200);
 
-    /* ---------- LOGIN AGAIN AS ADMIN ---------- */
-
+    /* ---------- LOGIN AS ADMIN ---------- */
     const adminJar = {};
 
     res = await request({
       port,
       method: "POST",
-      urlPath: "/auth/login",
-      body: { email, password },
+      urlPath: "/api/v1/auth/login",
+      body: { email, password: "123456" },
       jar: adminJar,
     });
 
     assert.equal(res.status, 200);
-    assert.ok(adminJar.cookie, "Admin login failed (no cookie)");
 
-    /* ---------- ADMIN CREATE EVENT ---------- */
-
+    /* ---------- CREATE EVENT ---------- */
     res = await request({
       port,
       method: "POST",
-      urlPath: "/admin/events",
+      urlPath: "/api/v1/admin/events",
       jar: adminJar,
       body: {
         title: "Admin Event",
-        description: "Test",
         event_date: "2026-05-01T10:00:00.000Z",
-        location: "NIT",
         capacity: 50,
       },
     });

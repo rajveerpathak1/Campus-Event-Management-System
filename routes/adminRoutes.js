@@ -3,7 +3,7 @@ const requireAuth = require("../middlewares/requireAuth");
 const { authorizeRoles } = require("../middlewares/roleMiddleware");
 const asyncHandler = require("../utils/asyncHandler");
 const adminController = require("../controllers/adminController");
-const { getAllRegistrations } = require("../controllers/eventController");
+const { getAllRegs } = require("../controllers/eventController");
 const {
   validateEventIdParam,
   validateCreateEvent,
@@ -13,7 +13,7 @@ const {
 const router = express.Router();
 
 router.use(requireAuth);
-router.use(authorizeRoles("admin", "superAdmin"));
+router.use(authorizeRoles("admin", "super-admin"));
 
 router.get("/events", asyncHandler(adminController.getAllEvents));
 router.get("/events/:id", validateEventIdParam, asyncHandler(adminController.getEventById));
@@ -26,6 +26,6 @@ router.post("/events/:id/publish", validateEventIdParam, asyncHandler(adminContr
 router.post("/events/:id/unpublish", validateEventIdParam, asyncHandler(adminController.unpublishEvent));
 router.post("/events/:id/cancel", validateEventIdParam, asyncHandler(adminController.cancelEvent));
 
-router.get("/registrations", getAllRegistrations);
+router.get("/registrations", getAllRegs);
 
 module.exports = router;

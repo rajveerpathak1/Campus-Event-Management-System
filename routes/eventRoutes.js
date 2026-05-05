@@ -1,50 +1,57 @@
 const express = require("express");
+
 const requireAuth = require("../middlewares/requireAuth");
 const { authorizeRoles } = require("../middlewares/roleMiddleware");
 
 const {
   getEvents,
   getEvent,
-  registerForEvent,
-  unregisterFromEvent,
-  getMyRegistrationsController, // ✅ added
+  register,
+  unregister,
+  getMyRegs,
 } = require("../controllers/eventController");
 
 const { validateEventIdParam } = require("../validators/event.validator");
 
 const router = express.Router();
 
-/* -------------------- GET ALL EVENTS -------------------- */
+/* -------------------- PUBLIC ROUTES -------------------- */
+
+// GET all events (public, but can personalize if logged in)
 router.get("/", getEvents);
 
-/* -------------------- GET MY REGISTRATIONS -------------------- */
-// ⚠️ must be before "/:id"
+
+
+/* -------------------- USER ROUTES -------------------- */
+
+// Get my registrations
 router.get(
   "/my-registrations",
   requireAuth,
   authorizeRoles("student"),
-  getMyRegistrationsController
+  getMyRegs
 );
 
-/* -------------------- GET SINGLE EVENT -------------------- */
+// GET single event
 router.get("/:id", validateEventIdParam, getEvent);
 
-/* -------------------- REGISTER -------------------- */
+
+// Register for event
 router.post(
   "/:id/register",
   requireAuth,
   authorizeRoles("student"),
   validateEventIdParam,
-  registerForEvent
+  register
 );
 
-/* -------------------- UNREGISTER -------------------- */
+// Unregister from event
 router.delete(
   "/:id/unregister",
   requireAuth,
   authorizeRoles("student"),
   validateEventIdParam,
-  unregisterFromEvent
+  unregister
 );
 
 module.exports = router;

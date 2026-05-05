@@ -3,8 +3,6 @@ require("dotenv").config();
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const http = require("node:http");
-const fs = require("node:fs");
-const path = require("node:path");
 
 const createApp = require("../app");
 const { connectDB, getDB } = require("../config/db");
@@ -12,43 +10,39 @@ const createSessionMiddleware = require("../config/session");
 
 /* ---------------- REQUEST HELPER ---------------- */
 
-const request = ({ port, method, urlPath, body, headers = {}, jar }) =>
-  new Promise((resolve, reject) => {
+const request = ({ port, method, urlPath, body, jar }) =>
+  new Promise((resolve) => {
     const payload = body ? JSON.stringify(body) : null;
 
-    const reqHeaders = {
-      ...headers,
-      ...(jar?.cookie ? { Cookie: jar.cookie } : {}),
+    const headers = {
+      ...(payload && {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(payload),
+      }),
+      ...(jar?.cookie && { Cookie: jar.cookie }),
     };
-
-    if (payload) {
-      reqHeaders["Content-Type"] = "application/json";
-      reqHeaders["Content-Length"] = Buffer.byteLength(payload);
-    }
 
     const options = {
       hostname: "127.0.0.1",
       port,
       path: urlPath,
       method,
-      headers: reqHeaders,
+      headers,
     };
 
-    const req = http.request(options, res => {
+    const req = http.request(options, (res) => {
       let data = "";
 
-      res.on("data", chunk => (data += chunk));
+      res.on("data", (chunk) => (data += chunk));
 
       res.on("end", () => {
-        const setCookies = res.headers["set-cookie"];
-
-        if (setCookies && jar) {
-          const sessionCookie = setCookies.find(c =>
-            c.includes("campus.sid") // ✅ FIXED
+        if (res.headers["set-cookie"] && jar) {
+          const cookie = res.headers["set-cookie"].find((c) =>
+            c.includes("campus.sid")
           );
 
-          if (sessionCookie) {
-            jar.cookie = sessionCookie.split(";")[0];
+          if (cookie) {
+            jar.cookie = cookie.split(";")[0];
           }
         }
 
@@ -65,11 +59,10 @@ const request = ({ port, method, urlPath, body, headers = {}, jar }) =>
 
 /* ---------------- TEST ---------------- */
 
-test("student registration flow works correctly", async () => {
+test("student auth + session flow", async () => {
   await connectDB();
   const pool = getDB();
 
-  // clean DB
   await pool.query(
     "TRUNCATE TABLE registrations, events, users RESTART IDENTITY CASCADE"
   );
@@ -84,39 +77,61 @@ test("student registration flow works correctly", async () => {
     const email = `student_${Date.now()}@test.com`;
     const password = "123456";
 
-    // signup
+    /* ---------- SIGNUP ---------- */
     let res = await request({
       port,
       method: "POST",
-      urlPath: "/auth/signup",
+      urlPath: "/api/v1/auth/signup",
       body: { name: "Student", email, password },
       jar,
     });
 
     assert.equal(res.status, 201);
+    assert.equal(res.json.success, true);
 
-    // login
+    /* ---------- LOGIN ---------- */
     res = await request({
       port,
       method: "POST",
-      urlPath: "/auth/login",
+      urlPath: "/api/v1/auth/login",
       body: { email, password },
       jar,
     });
 
     assert.equal(res.status, 200);
-    assert.ok(jar.cookie);
+    assert.ok(jar.cookie, "Session cookie not set");
 
-    // me
+    /* ---------- GET ME ---------- */
     res = await request({
       port,
       method: "GET",
-      urlPath: "/auth/me",
+      urlPath: "/api/v1/auth/me",
       jar,
     });
 
     assert.equal(res.status, 200);
+    assert.equal(res.json.data.email, email);
     assert.equal(res.json.data.role, "student");
+
+    /* ---------- LOGOUT ---------- */
+    res = await request({
+      port,
+      method: "POST",
+      urlPath: "/api/v1/auth/logout",
+      jar,
+    });
+
+    assert.equal(res.status, 200);
+
+    /* ---------- ACCESS AFTER LOGOUT (SHOULD FAIL) ---------- */
+    res = await request({
+      port,
+      method: "GET",
+      urlPath: "/api/v1/auth/me",
+      jar,
+    });
+
+    assert.equal(res.status, 401);
 
   } finally {
     server.close();
