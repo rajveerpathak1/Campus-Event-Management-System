@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  "start": "node db/migrate.js && node server.js"
-},
+    "start": "node db/migrate.js && node server.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rajveerpathak1/Campus-Event-Management-System.git"
@@ -28,6 +28,7 @@
     "express-rate-limit": "^8.3.2",
     "express-session": "^1.18.2",
     "helmet": "^8.1.0",
+    "hpp": "^0.2.3",
     "morgan": "^1.10.1",
     "nodemon": "^3.1.11",
     "pg": "^8.16.3"

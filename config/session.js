@@ -5,6 +5,8 @@ const { getDB } = require("./db");
 const createSessionMiddleware = () => {
   const pool = getDB();
 
+  const isProduction = process.env.NODE_ENV === "production";
+
   return session({
     name: "campus.sid",
 
@@ -19,12 +21,12 @@ const createSessionMiddleware = () => {
     resave: false,
     saveUninitialized: false,
 
-    proxy: true, // ✅ ALWAYS TRUE FOR RENDER
+    proxy: true,
 
     cookie: {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      secure: isProduction, //  FIXED
+      sameSite: isProduction ? "none" : "lax", //  FIXED
       maxAge: 1000 * 60 * 60 * 24,
     },
   });

@@ -4,6 +4,7 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const compression = require("compression");
 const rateLimit = require("express-rate-limit");
+const hpp = require("hpp");
 
 const authRoutes = require("./routes/authRoutes");
 const eventRoutes = require("./routes/eventRoutes");
@@ -16,17 +17,23 @@ const errorHandler = require("./middlewares/errorMiddleware");
 const createApp = ({ sessionMiddleware }) => {
   const app = express();
 
-  // Trust proxy (important for cookies in production)
   app.set("trust proxy", 1);
 
-  //  Security & parsing
- app.use(
-  helmet({
-    crossOriginResourcePolicy: false,
-  })
-);
+  //  Security headers
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: false,
+    })
+  );
+
+  //  Prevent parameter pollution
+  app.use(hpp());
+
+  //  Body parsing
   app.use(express.json({ limit: "10kb" }));
   app.use(express.urlencoded({ extended: true }));
+
+  //  Compression
   app.use(compression());
 
   //  Logging
@@ -34,23 +41,18 @@ const createApp = ({ sessionMiddleware }) => {
     app.use(morgan("dev"));
   }
 
-  //  CORS setup (cleaned)
+  //  CORS
   const allowedOrigins = process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(",").map(o => o.trim())
+    ? process.env.CORS_ORIGINS.split(",").map((o) => o.trim())
     : [];
 
   app.use(
     cors({
       origin: (origin, cb) => {
-        // allow no-origin (Postman, mobile apps)
         if (!origin) return cb(null, true);
-
-        // allow all if no env set
         if (allowedOrigins.length === 0) return cb(null, true);
 
-        if (allowedOrigins.includes(origin)) {
-          return cb(null, true);
-        }
+        if (allowedOrigins.includes(origin)) return cb(null, true);
 
         return cb(new Error("CORS not allowed"));
       },
@@ -58,20 +60,16 @@ const createApp = ({ sessionMiddleware }) => {
     })
   );
 
-//   app.use((req, res, next) => {
-//   res.header("Access-Control-Allow-Credentials", "true");
-//   next();
-// });
-
-  //  Rate limiting
+  //  Rate Limiting
   app.use(
     rateLimit({
       windowMs: 15 * 60 * 1000,
       max: 100,
+      message: "Too many requests, try again later",
     })
   );
 
-  //  Session middleware
+  //  Session
   if (sessionMiddleware) {
     app.use(sessionMiddleware);
   }
@@ -81,7 +79,7 @@ const createApp = ({ sessionMiddleware }) => {
     res.status(200).json({ status: "ok" });
   });
 
-  //  Root route
+  //  Root
   app.get("/", (req, res) => {
     res.json({
       success: true,
@@ -89,22 +87,22 @@ const createApp = ({ sessionMiddleware }) => {
     });
   });
 
-  //  Routes
-  app.use("/auth", authRoutes);
-  app.use("/events", eventRoutes);
-  app.use("/students", studentRoutes);
-  app.use("/admin", adminRoutes);
-  app.use("/super-admin", superAdminRoutes);
+  //  API Versioning
+  app.use("/api/v1/auth", authRoutes);
+  app.use("/api/v1/events", eventRoutes);
+  app.use("/api/v1/students", studentRoutes);
+  app.use("/api/v1/admin", adminRoutes);
+  app.use("/api/v1/super-admin", superAdminRoutes);
 
-  //  404 handler (BEFORE error handler)
-  app.use((req, res, next) => {
+  //  404
+  app.use((req, res) => {
     res.status(404).json({
       success: false,
       message: "Route not found",
     });
   });
 
-  //  Global error handler (LAST)
+  //  Global error handler
   app.use(errorHandler);
 
   return app;
