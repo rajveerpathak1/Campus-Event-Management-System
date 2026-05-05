@@ -11,10 +11,18 @@ const ApiError = require("../utils/ApiError");
 
 /* -------------------- SIGN UP -------------------- */
 exports.signUp = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
+  let { name, email, password } = req.body;
 
   if (!name || !email || !password) {
     throw new ApiError(400, "name, email, and password are required");
+  }
+
+  //  normalize email
+  email = email.toLowerCase().trim();
+
+  //  password strength check
+  if (password.length < 6) {
+    throw new ApiError(400, "Password must be at least 6 characters");
   }
 
   const existingUser = await findUserByEmail(email);
@@ -35,18 +43,15 @@ exports.signUp = asyncHandler(async (req, res) => {
   res.status(201).json({
     success: true,
     message: "User registered successfully",
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
+    data: user,
   });
 });
 
 /* -------------------- LOGIN -------------------- */
 exports.login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  let { email, password } = req.body;
+
+  email = email.toLowerCase().trim();
 
   const user = await findUserByEmail(email);
   if (!user) throw new ApiError(401, "Invalid credentials");
@@ -58,7 +63,7 @@ exports.login = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Session not initialized");
   }
 
-  // 🔥 CRITICAL FIX START
+  // regenerate session (prevent fixation)
   await new Promise((resolve, reject) => {
     req.session.regenerate(err => {
       if (err) return reject(err);
@@ -68,32 +73,35 @@ exports.login = asyncHandler(async (req, res) => {
         role: user.role,
       };
 
-      // 🔥 THIS LINE FIXES YOUR ENTIRE BUG
       req.session.save(err => {
         if (err) return reject(err);
         resolve();
       });
     });
   });
-  // 🔥 CRITICAL FIX END
 
   res.status(200).json({
     success: true,
     message: "Login successful",
+    data: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
   });
 });
 
 /* -------------------- LOGOUT -------------------- */
 exports.logout = asyncHandler(async (req, res) => {
+  const isProduction = process.env.NODE_ENV === "production";
+
   if (!req.session || !req.session.user) {
     return res.status(200).json({
       success: true,
       message: "Already logged out",
-      user: null,
     });
   }
-
-  const user = { ...req.session.user };
 
   await new Promise((resolve, reject) => {
     req.session.destroy(err => {
@@ -104,14 +112,13 @@ exports.logout = asyncHandler(async (req, res) => {
 
   res.clearCookie("campus.sid", {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
   });
 
   res.status(200).json({
     success: true,
     message: "Logged out successfully",
-    user,
   });
 });
 
@@ -130,11 +137,6 @@ exports.me = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    data: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
+    data: user,
   });
 });
