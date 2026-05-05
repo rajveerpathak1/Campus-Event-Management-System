@@ -1,3 +1,10 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Student
+ *   description: Student APIs
+ */
+
 const express = require("express");
 
 const requireAuth = require("../middlewares/requireAuth");
@@ -13,6 +20,18 @@ const router = express.Router();
 // Apply auth globally
 router.use(requireAuth);
 router.use(authorizeRoles("student"));
+
+
+/**
+ * @swagger
+ * /students/profile:
+ *   get:
+ *     summary: Get student profile
+ *     tags: [Student]
+ *     responses:
+ *       200:
+ *         description: Profile data
+ */
 
 /* -------------------- GET PROFILE -------------------- */
 router.get(

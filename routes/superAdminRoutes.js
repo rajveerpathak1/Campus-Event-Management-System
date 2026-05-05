@@ -1,3 +1,10 @@
+/**
+ * @swagger
+ * tags:
+ *   name: SuperAdmin
+ *   description: Super Admin APIs
+ */
+
 const express = require("express");
 const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
@@ -18,6 +25,15 @@ const router = express.Router();
 router.use(requireAuth);
 router.use(authorizeRoles("super-admin"));
 
+
+
+/**
+ * @swagger
+ * /super-admin/users:
+ *   get:
+ *     summary: Get all users
+ *     tags: [SuperAdmin]
+ */
 /* -------------------- GET USERS -------------------- */
 router.get("/users", asyncHandler(async (req, res) => {
   const users = await getAllUsers();
@@ -29,6 +45,14 @@ router.get("/users", asyncHandler(async (req, res) => {
   });
 }));
 
+
+/**
+ * @swagger
+ * /super-admin/users/{id}:
+ *   get:
+ *     summary: Get user by ID
+ *     tags: [SuperAdmin]
+ */
 /* -------------------- GET USER -------------------- */
 router.get("/users/:id", asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
@@ -40,6 +64,15 @@ router.get("/users/:id", asyncHandler(async (req, res) => {
   res.json({ success: true, data: user });
 }));
 
+
+
+/**
+ * @swagger
+ * /super-admin/users/{id}/role:
+ *   patch:
+ *     summary: Update user role
+ *     tags: [SuperAdmin]
+ */
 /* -------------------- UPDATE ROLE -------------------- */
 router.patch("/users/:id/role", asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
@@ -63,6 +96,14 @@ router.patch("/users/:id/role", asyncHandler(async (req, res) => {
     data: updated,
   });
 }));
+
+
+/** * @swagger
+ * /super-admin/users/{id}:
+ *   delete:
+ *     summary: Delete user
+ *     tags: [SuperAdmin]
+ */
 
 /* -------------------- DELETE USER -------------------- */
 router.delete("/users/:id", asyncHandler(async (req, res) => {

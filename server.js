@@ -1,5 +1,5 @@
 require("dotenv").config();
-
+const logger = require("./utils/logger");
 const createApp = require("./app");
 const { connectDB, disconnectDB } = require("./config/db");
 const createSessionMiddleware = require("./config/session");
@@ -16,11 +16,13 @@ const startServer = async () => {
     const app = createApp({ sessionMiddleware });
 
     server = app.listen(PORT, () => {
-      console.log(` Server running on port ${PORT}`);
+      const logger = require("./utils/logger");
+
+logger.info(`Server running on port ${PORT}`);
     });
 
   } catch (err) {
-    console.error(" Startup failed:", err.message);
+    logger.error(err);
     process.exit(1);
   }
 };
@@ -30,13 +32,13 @@ const shutdown = async (signal) => {
 
   if (server) {
     server.close(async () => {
-      console.log(" HTTP server closed");
+      logger.info("HTTP server closed");
 
       try {
         await disconnectDB();
-        console.log(" Database disconnected");
+        logger.info("Database disconnected");
       } catch (err) {
-        console.error("DB disconnect error:", err);
+        logger.error("DB disconnect error:", err);
       }
 
       process.exit(0);
@@ -44,7 +46,7 @@ const shutdown = async (signal) => {
 
     // Force shutdown after timeout
     setTimeout(() => {
-      console.error(" Forced shutdown");
+      logger.error(" Forced shutdown");
       process.exit(1);
     }, 10000).unref();
   } else {
@@ -57,12 +59,12 @@ process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
 
 process.on("uncaughtException", (err) => {
-  console.error(" Uncaught Exception:", err);
+  logger.error(" Uncaught Exception:", err);
   shutdown("uncaughtException");
 });
 
 process.on("unhandledRejection", (err) => {
-  console.error(" Unhandled Rejection:", err);
+  logger.error(" Unhandled Rejection:", err);
   shutdown("unhandledRejection");
 });
 

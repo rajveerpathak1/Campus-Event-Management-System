@@ -5,6 +5,11 @@ const morgan = require("morgan");
 const compression = require("compression");
 const rateLimit = require("express-rate-limit");
 const hpp = require("hpp");
+const logger = require("./utils/logger");
+
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./config/swagger");
+
 
 const authRoutes = require("./routes/authRoutes");
 const eventRoutes = require("./routes/eventRoutes");
@@ -38,7 +43,13 @@ const createApp = ({ sessionMiddleware }) => {
 
   //  Logging
   if (process.env.NODE_ENV === "development") {
-    app.use(morgan("dev"));
+    app.use(
+  morgan("combined", {
+    stream: {
+      write: (message) => logger.info(message.trim()),
+    },
+  })
+);
   }
 
   //  CORS
@@ -73,6 +84,10 @@ const createApp = ({ sessionMiddleware }) => {
   if (sessionMiddleware) {
     app.use(sessionMiddleware);
   }
+
+  // swagger docs
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 
   //  Health check
   app.get("/health", (req, res) => {
