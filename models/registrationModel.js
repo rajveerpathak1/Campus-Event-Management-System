@@ -65,3 +65,8 @@ const registerForEvent = async ({ userId, eventId }) => {
     client.release();
   }
 };
+
+
+module.exports = {
+  registerForEvent,
+};
