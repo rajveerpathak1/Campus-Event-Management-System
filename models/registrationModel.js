@@ -17,13 +17,16 @@ const registerForEvent = async ({ userId, eventId }) => {
     );
 
     const event = eventRes.rows[0];
-    if (!event) throw new ApiError(404, "Event not found");
+
+    if (!event) {
+      throw new ApiError(404, "Event not found");
+    }
 
     if (event.status !== "published") {
       throw new ApiError(400, "Event not available");
     }
 
-    // 🔥 NEW: prevent past registrations
+    // Prevent registration for past events
     if (new Date(event.event_date) < new Date()) {
       throw new ApiError(400, "Event already started/ended");
     }
@@ -40,6 +43,7 @@ const registerForEvent = async ({ userId, eventId }) => {
     }
 
     let insertRes;
+
     try {
       insertRes = await client.query(
         `INSERT INTO registrations (user_id, event_id)
@@ -51,22 +55,59 @@ const registerForEvent = async ({ userId, eventId }) => {
       if (err.code === "23505") {
         throw new ApiError(409, "Already registered");
       }
+
       throw err;
     }
 
     await client.query("COMMIT");
 
-    return { registrationId: insertRes.rows[0].id };
+    return {
+      registrationId: insertRes.rows[0].id,
+    };
 
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;
+
   } finally {
     client.release();
   }
 };
 
 
+// ✅ NEW FUNCTION
+const getAllRegistrations = async () => {
+  const pool = getDB();
+
+  const result = await pool.query(
+    `
+    SELECT
+      r.id,
+      r.created_at AS "registeredAt",
+
+      u.name AS "userName",
+      u.email AS "userEmail",
+
+      e.title AS "eventTitle",
+      e.event_date AS "eventDate"
+
+    FROM registrations r
+
+    JOIN users u
+      ON r.user_id = u.id
+
+    JOIN events e
+      ON r.event_id = e.id
+
+    ORDER BY r.created_at DESC
+    `
+  );
+
+  return result.rows;
+};
+
+
 module.exports = {
   registerForEvent,
+  getAllRegistrations,
 };
