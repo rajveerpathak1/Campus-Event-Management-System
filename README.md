@@ -6,6 +6,7 @@ A production-ready backend system for managing campus events with role-based acc
 This system supports students, admins, and super-admins with different access levels and ensures data integrity using PostgreSQL and database constraints.
 
 ---
+<img width="1910" height="891" alt="image" src="https://github.com/user-attachments/assets/0dbcc529-b142-477f-9e45-32c8490fa1cd" />
 
 ## 🧠 Key Features
 
@@ -229,6 +230,7 @@ npm run dev
 ---
 🌐 Deployment
 - Deployed on Render : https://campus-event-management-system-lhpe.onrender.com
+- Frontend on Vercel : cem-frontend-three.vercel.app
 - Environment-based configuration
 
 ---
