@@ -230,7 +230,7 @@ npm run dev
 ---
 🌐 Deployment
 - Deployed on Render : https://campus-event-management-system-lhpe.onrender.com
-- Frontend on Vercel : cem-frontend-three.vercel.app
+- Frontend on Vercel : https://cem-frontend-three.vercel.app
 - Environment-based configuration
 
 ---
