@@ -1,6 +1,11 @@
 const { getDB } = require("../config/db");
 const ApiError = require("../utils/ApiError");
 
+const {
+  sendRegistrationEmail,
+  sendUnregisterEmail,
+} = require("../services/emailService");
+
 /* ================================================= */
 /* REGISTER */
 /* ================================================= */
@@ -16,10 +21,13 @@ const registerForEvent = async ({
   try {
     await client.query("BEGIN");
 
+    /* ---------------- EVENT ---------------- */
+
     const eventRes = await client.query(
       `
       SELECT
         id,
+        title,
         capacity,
         status,
         event_date
@@ -60,6 +68,33 @@ const registerForEvent = async ({
       );
     }
 
+    /* ---------------- USER ---------------- */
+
+    const userRes = await client.query(
+      `
+      SELECT
+        id,
+        name,
+        email
+
+      FROM users
+
+      WHERE id = $1
+      `,
+      [userId]
+    );
+
+    const user = userRes.rows[0];
+
+    if (!user) {
+      throw new ApiError(
+        404,
+        "User not found"
+      );
+    }
+
+    /* ---------------- CAPACITY ---------------- */
+
     const countRes = await client.query(
       `
       SELECT COUNT(*)::int AS count
@@ -80,6 +115,8 @@ const registerForEvent = async ({
         "Event is full"
       );
     }
+
+    /* ---------------- INSERT ---------------- */
 
     let insertRes;
 
@@ -108,7 +145,25 @@ const registerForEvent = async ({
       throw err;
     }
 
+    /* ---------------- COMMIT ---------------- */
+
     await client.query("COMMIT");
+
+    /* ---------------- EMAIL ---------------- */
+
+    try {
+      await sendRegistrationEmail({
+        to: user.email,
+        name: user.name,
+        eventTitle: event.title,
+        eventDate: event.event_date,
+      });
+    } catch (emailErr) {
+      console.error(
+        "Registration email failed:",
+        emailErr.message
+      );
+    }
 
     return {
       registrationId:
@@ -135,6 +190,57 @@ const unregisterForEvent = async ({
 }) => {
   const db = getDB();
 
+  /* ---------------- USER ---------------- */
+
+  const userRes = await db.query(
+    `
+    SELECT
+      id,
+      name,
+      email
+
+    FROM users
+
+    WHERE id = $1
+    `,
+    [userId]
+  );
+
+  const user = userRes.rows[0];
+
+  if (!user) {
+    throw new ApiError(
+      404,
+      "User not found"
+    );
+  }
+
+  /* ---------------- EVENT ---------------- */
+
+  const eventRes = await db.query(
+    `
+    SELECT
+      id,
+      title
+
+    FROM events
+
+    WHERE id = $1
+    `,
+    [eventId]
+  );
+
+  const event = eventRes.rows[0];
+
+  if (!event) {
+    throw new ApiError(
+      404,
+      "Event not found"
+    );
+  }
+
+  /* ---------------- DELETE ---------------- */
+
   const result = await db.query(
     `
     DELETE FROM registrations
@@ -151,6 +257,21 @@ const unregisterForEvent = async ({
     throw new ApiError(
       404,
       "Registration not found"
+    );
+  }
+
+  /* ---------------- EMAIL ---------------- */
+
+  try {
+    await sendUnregisterEmail({
+      to: user.email,
+      name: user.name,
+      eventTitle: event.title,
+    });
+  } catch (emailErr) {
+    console.error(
+      "Unregister email failed:",
+      emailErr.message
     );
   }
 
