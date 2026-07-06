@@ -1,88 +1,97 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+/* =====================================================
+   SEND EMAIL
+===================================================== */
 
-const sendRegistrationEmail = async ({
+const sendEmail = async ({
   to,
-  name,
-  eventTitle,
-  eventDate,
+  subject,
+  html,
 }) => {
-  await transporter.sendMail({
-    from: `"CampusEvents" <${process.env.EMAIL_USER}>`,
+
+  return await resend.emails.send({
+
+    from: process.env.EMAIL_FROM,
 
     to,
 
-    subject: `Registration Confirmed - ${eventTitle}`,
+    subject,
 
-    html: `
-      <div style="font-family: Arial, sans-serif;">
-        <h2>Hello ${name},</h2>
+    html,
 
-        <p>
-          You have successfully registered for
-          <strong>${eventTitle}</strong>.
-        </p>
-
-        <p>
-          <strong>Event Date:</strong>
-          ${new Date(eventDate).toDateString()}
-        </p>
-
-        <br/>
-
-        <p>
-          See you there 🚀
-        </p>
-
-        <p>
-          Campus Event Management System
-        </p>
-      </div>
-    `,
   });
+
 };
 
-const sendUnregisterEmail = async ({
-  to,
+/* =====================================================
+   VERIFY EMAIL
+===================================================== */
+
+const sendVerificationEmail = async ({
+  email,
   name,
-  eventTitle,
+  verificationUrl,
 }) => {
-  await transporter.sendMail({
-    from: `"CampusEvents" <${process.env.EMAIL_USER}>`,
 
-    to,
+  const html = require("../templates/verifyEmail")({
 
-    subject: `Registration Cancelled - ${eventTitle}`,
+    name,
 
-    html: `
-      <div style="font-family: Arial, sans-serif;">
-        <h2>Hello ${name},</h2>
+    verificationUrl,
 
-        <p>
-          Your registration for
-          <strong>${eventTitle}</strong>
-          has been cancelled.
-        </p>
-
-        <br/>
-
-        <p>
-          Campus Event Management System
-        </p>
-      </div>
-    `,
   });
+
+  return sendEmail({
+
+    to: email,
+
+    subject: "Verify your email",
+
+    html,
+
+  });
+
+};
+
+/* =====================================================
+   PASSWORD RESET
+===================================================== */
+
+const sendPasswordResetEmail = async ({
+  email,
+  name,
+  resetUrl,
+}) => {
+
+  const html = require("../templates/resetPassword")({
+
+    name,
+
+    resetUrl,
+
+  });
+
+  return sendEmail({
+
+    to: email,
+
+    subject: "Reset your password",
+
+    html,
+
+  });
+
 };
 
 module.exports = {
-  sendRegistrationEmail,
-  sendUnregisterEmail,
+
+  sendEmail,
+
+  sendVerificationEmail,
+
+  sendPasswordResetEmail,
+
 };

@@ -1,91 +1,196 @@
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
-const authConfig = require("../config/auth");
 const jwtConfig = require("../config/jwt");
+const authConfig = require("../config/auth");
+
 /* =====================================================
-   Generate Access Token
+   ACCESS TOKEN
 ===================================================== */
 
 const generateAccessToken = (user) => {
-  return jwt.sign(
-    {
-      sub: user.id,
-      role: user.role,
-      email: user.email,
-      type: "access",
-    },
-    jwtConfig.accessSecret,
-    {
-      expiresIn: jwtConfig.accessExpiry,
-    }
-  );
+
+    return jwt.sign(
+
+        {
+
+            sub: user.id,
+
+            email: user.email,
+
+            role: user.role,
+
+            type: "access",
+
+        },
+
+        jwtConfig.accessSecret,
+
+        {
+
+            expiresIn:
+                jwtConfig.accessExpiry,
+
+        }
+
+    );
+
 };
 
 /* =====================================================
-   Generate Refresh Token
+   REFRESH TOKEN
 ===================================================== */
 
-const generateRefreshToken = (user, tokenId) => {
-  return jwt.sign(
-    {
-      sub: user.id,
-      jti: tokenId,
-      type: "refresh",
-    },
-    jwtConfig.refreshSecret,
-    {
-      expiresIn: jwtConfig.refreshExpiry,
-    }
-  );
+const generateRefreshToken = ({
+    userId,
+    tokenId,
+}) => {
+
+    return jwt.sign(
+
+        {
+
+            sub: userId,
+
+            jti: tokenId,
+
+            type: "refresh",
+
+        },
+
+        jwtConfig.refreshSecret,
+
+        {
+
+            expiresIn:
+                jwtConfig.refreshExpiry,
+
+        }
+
+    );
+
 };
 
 /* =====================================================
-   Verify Access Token
+   VERIFY ACCESS TOKEN
 ===================================================== */
 
 const verifyAccessToken = (token) => {
-  return jwt.verify(
-    token,
-    jwtConfig.accessSecret
-  );
+
+    return jwt.verify(
+
+        token,
+
+        jwtConfig.accessSecret
+
+    );
+
 };
 
 /* =====================================================
-   Verify Refresh Token
+   VERIFY REFRESH TOKEN
 ===================================================== */
 
 const verifyRefreshToken = (token) => {
-  return jwt.verify(
-    token,
-    jwtConfig.refreshSecret
-  );
+
+    return jwt.verify(
+
+        token,
+
+        jwtConfig.refreshSecret
+
+    );
+
 };
 
 /* =====================================================
-   Cookie Options
+   DECODE TOKEN
 ===================================================== */
 
-const refreshCookieOptions = {
-  httpOnly: true,
+const decodeToken = (token) => {
 
-  secure:
-    process.env.NODE_ENV === "production",
+    return jwt.decode(token);
 
-  sameSite:
-    process.env.NODE_ENV === "production"
-      ? "none"
-      : "lax",
-
-  path: "/api/v1/auth/refresh",
-
-  maxAge:
-    7 * 24 * 60 * 60 * 1000,
 };
 
+/* =====================================================
+   AUTH HEADER
+===================================================== */
+
+const extractBearerToken = (req) => {
+
+    const authHeader =
+        req.headers.authorization;
+
+    if (!authHeader) {
+
+        return null;
+
+    }
+
+    if (
+        !authHeader.startsWith("Bearer ")
+    ) {
+
+        return null;
+
+    }
+
+    return authHeader.split(" ")[1];
+
+};
+
+/* =====================================================
+   DEVICE ID
+===================================================== */
+
+const generateDeviceId = () => {
+
+    return crypto.randomUUID();
+
+};
+
+/* =====================================================
+   COOKIE OPTIONS
+===================================================== */
+
+const getRefreshCookieOptions = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  maxAge: authConfig.refreshCookieMaxAge,
+  path: "/api/v1/auth/refresh",
+});
+
+/* =====================================================
+   CLEAR COOKIE
+===================================================== */
+
+const getClearRefreshCookieOptions = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  path: "/api/v1/auth/refresh",
+});
+
 module.exports = {
-  generateAccessToken,
-  generateRefreshToken,
-  verifyAccessToken,
-  verifyRefreshToken,
-  refreshCookieOptions,
+
+    generateAccessToken,
+
+    generateRefreshToken,
+
+    verifyAccessToken,
+
+    verifyRefreshToken,
+
+    decodeToken,
+
+    extractBearerToken,
+
+    generateDeviceId,
+
+    getRefreshCookieOptions,
+
+    getClearRefreshCookieOptions,
+
 };
