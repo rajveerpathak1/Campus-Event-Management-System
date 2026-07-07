@@ -6,24 +6,51 @@ const resend = new Resend(process.env.RESEND_API_KEY);
    SEND EMAIL
 ===================================================== */
 
+// const sendEmail = async ({
+//   to,
+//   subject,
+//   html,
+// }) => {
+
+//   return await resend.emails.send({
+
+//     from: process.env.EMAIL_FROM,
+
+//     to,
+
+//     subject,
+
+//     html,
+
+//   });
+
+// };
+
 const sendEmail = async ({
   to,
   subject,
   html,
 }) => {
 
-  return await resend.emails.send({
+  console.log("API KEY:", process.env.RESEND_API_KEY ? "Loaded" : "Missing");
+  console.log("FROM:", process.env.EMAIL_FROM);
+  console.log("TO:", to);
 
+  const { data, error } = await resend.emails.send({
     from: process.env.EMAIL_FROM,
-
     to,
-
     subject,
-
     html,
-
   });
 
+  console.log("Resend Data:", data);
+  console.log("Resend Error:", error);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
 };
 
 /* =====================================================

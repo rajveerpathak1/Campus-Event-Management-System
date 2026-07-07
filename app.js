@@ -16,6 +16,8 @@ const eventRoutes = require("./routes/eventRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const superAdminRoutes = require("./routes/superAdminRoutes");
+const cookieParser = require("cookie-parser");
+
 
 const errorHandler = require("./middlewares/errorMiddleware");
 
@@ -33,6 +35,7 @@ const createApp = ({ sessionMiddleware }) => {
 
   //  Prevent parameter pollution
   app.use(hpp());
+  app.use(cookieParser());
 
   //  Body parsing
   app.use(express.json({ limit: "10kb" }));

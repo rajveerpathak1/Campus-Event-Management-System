@@ -43,7 +43,6 @@ const generateAccessToken = (user) => {
 
 const generateRefreshToken = ({
     userId,
-    tokenId,
 }) => {
 
     return jwt.sign(
@@ -52,7 +51,7 @@ const generateRefreshToken = ({
 
             sub: userId,
 
-            jti: tokenId,
+            // jti: tokenId,
 
             type: "refresh",
 
@@ -159,7 +158,7 @@ const getRefreshCookieOptions = () => ({
   secure: process.env.NODE_ENV === "production",
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   maxAge: authConfig.refreshCookieMaxAge,
-  path: "/api/v1/auth/refresh",
+  path: "/api/v1/auth",
 });
 
 /* =====================================================
@@ -170,7 +169,7 @@ const getClearRefreshCookieOptions = () => ({
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-  path: "/api/v1/auth/refresh",
+  path: "/api/v1/auth",
 });
 
 module.exports = {

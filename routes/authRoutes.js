@@ -1,85 +1,102 @@
-/**
- * @swagger
- * tags:
- *   name: Auth
- *   description: Authentication APIs
- */
-
 const express = require("express");
 
 const {
-  signUp,
+
+  register,
+  verifyEmail,
+  resendVerification,
   login,
+  refresh,
   logout,
+  logoutAll,
+  forgotPassword,
+  resetPassword,
   me,
+
 } = require("../controllers/authController");
 
 const {
-  validateSignup,
-  validateLogin,
-} = require("../validators/auth.validator");
 
-const requireAuth = require("../middlewares/requireAuth");
+  validateRegister,
+  validateLogin,
+
+} = require("../validators/authValidator");
+
+const verifyAccessToken = require("../middlewares/verifyAccessToken");
 
 const router = express.Router();
 
+/* ============================================================
+   PUBLIC ROUTES
+============================================================ */
 
-/**
- * @swagger
- * /auth/signup:
- *   post:
- *     summary: Register new user
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *               - email
- *               - password
- *             properties:
- *               name:
- *                 type: string
- *                 example: Rajveer
- *               email:
- *                 type: string
- *                 example: rajveer@gmail.com
- *               password:
- *                 type: string
- *                 example: 123456
- *     responses:
- *       201:
- *         description: User created successfully
- */
-router.post("/signup", validateSignup, signUp);
+// Register
+router.post(
+  "/register",
+  validateRegister,
+  register
+);
 
-/**
- * @swagger
- * /auth/login:
- *   post:
- *     summary: Login user
- *     tags: [Auth]
- *     responses:
- *       200:
- *         description: Login successful
- */
-router.post("/login", validateLogin, login);
-router.post("/logout", requireAuth, logout);
+// Verify Email
+router.get(
+  "/verify-email",
+  verifyEmail
+);
 
-/**
- * @swagger
- * /auth/me:
- *   get:
- *     summary: Get current logged in user
- *     tags: [Auth]
- *     responses:
- *       200:
- *         description: User data
- */
-// 🔥 protected now
-router.get("/me", requireAuth, me);
+// Resend Verification Email
+router.post(
+  "/resend-verification",
+  resendVerification
+);
+
+// Login
+router.post(
+  "/login",
+  validateLogin,
+  login
+);
+
+// Refresh Access Token
+router.post(
+  "/refresh",
+  refresh
+);
+
+// Forgot Password
+router.post(
+  "/forgot-password",
+  forgotPassword
+);
+
+// Reset Password
+router.post(
+  "/reset-password",
+  resetPassword
+);
+
+/* ============================================================
+   PROTECTED ROUTES
+============================================================ */
+
+// Current User
+router.get(
+  "/me",
+  verifyAccessToken,
+  me
+);
+
+// Logout
+router.post(
+  "/logout",
+  verifyAccessToken,
+  logout
+);
+
+// Logout All Devices
+router.post(
+  "/logout-all",
+  verifyAccessToken,
+  logoutAll
+);
 
 module.exports = router;

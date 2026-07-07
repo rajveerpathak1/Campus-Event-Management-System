@@ -549,6 +549,235 @@ const markEmailVerified = async (userId) => {
 };
 
 
+/* ============================================================
+   UPDATE PASSWORD
+============================================================ */
+
+const updatePassword = async ({
+    userId,
+    passwordHash,
+}) => {
+
+    const db = getDB();
+
+    const result = await db.query(
+        `
+        UPDATE users
+
+        SET
+
+            password_hash = $2,
+
+            updated_at = NOW()
+
+        WHERE id = $1
+
+        RETURNING *
+        `,
+        [
+            userId,
+            passwordHash,
+        ]
+    );
+
+    return result.rows[0] || null;
+
+};
+
+
+/* ============================================================
+   REVOKE REFRESH TOKEN BY HASH
+============================================================ */
+
+const revokeRefreshTokenByHash = async (
+    tokenHash
+) => {
+
+    const db = getDB();
+
+    await db.query(
+        `
+        UPDATE refresh_tokens
+
+        SET revoked_at = NOW()
+
+        WHERE token_hash = $1
+
+        `,
+        [tokenHash]
+    );
+
+};
+
+
+/* ============================================================
+   DELETE EXPIRED TOKENS
+============================================================ */
+
+const deleteExpiredRefreshTokens =
+async () => {
+
+    const db = getDB();
+
+    await db.query(
+        `
+        DELETE
+
+        FROM refresh_tokens
+
+        WHERE expires_at < NOW()
+        `
+    );
+
+};
+
+
+
+/* ============================================================
+   DELETE EXPIRED VERIFICATION TOKENS
+============================================================ */
+
+const deleteExpiredVerificationTokens =
+async () => {
+
+    const db = getDB();
+
+    await db.query(
+        `
+        DELETE
+
+        FROM email_verification_tokens
+
+        WHERE expires_at < NOW()
+        `
+    );
+
+};
+
+
+/* ============================================================
+   DELETE EXPIRED PASSWORD TOKENS
+============================================================ */
+
+const deleteExpiredPasswordResetTokens =
+async () => {
+
+    const db = getDB();
+
+    await db.query(
+        `
+        DELETE
+
+        FROM password_reset_tokens
+
+        WHERE expires_at < NOW()
+        `
+    );
+
+};
+
+/* ============================================================
+   FIND VERIFICATION TOKEN WITH USER
+============================================================ */
+
+const findVerificationTokenWithUser =
+async (tokenHash) => {
+
+    const db = getDB();
+
+    const result = await db.query(
+        `
+        SELECT
+
+            evt.user_id,
+
+            u.id,
+
+            u.name,
+
+            u.email,
+
+            u.role,
+
+            u.email_verified_at
+
+        FROM email_verification_tokens evt
+
+        JOIN users u
+
+            ON u.id = evt.user_id
+
+        WHERE evt.token_hash = $1
+
+        AND evt.expires_at > NOW()
+
+        LIMIT 1
+        `,
+        [tokenHash]
+    );
+
+    return result.rows[0] || null;
+
+};
+
+
+/* ============================================================
+   FIND REFRESH TOKEN WITH USER
+============================================================ */
+
+const findRefreshTokenWithUser =
+async (tokenHash) => {
+
+    const db = getDB();
+
+    const result = await db.query(
+        `
+        SELECT
+
+            rt.id AS refresh_token_id,
+
+            rt.user_id,
+
+            rt.token_hash,
+
+            rt.expires_at,
+
+            rt.revoked_at,
+            rt.device_id,
+rt.device_name,
+rt.user_agent,
+rt.ip_address,
+
+            u.id,
+
+            u.name,
+
+            u.email,
+
+            u.role,
+
+            u.email_verified_at
+
+        FROM refresh_tokens rt
+
+        JOIN users u
+
+            ON u.id = rt.user_id
+
+        WHERE rt.token_hash = $1
+        AND rt.revoked_at IS NULL
+        AND rt.expires_at > NOW()
+        LIMIT 1
+        `,
+        [tokenHash]
+    );
+
+    return result.rows[0] || null;
+
+};
+
+
+
 module.exports = {
 
     // Users
@@ -594,5 +823,20 @@ module.exports = {
     findOAuthAccount,
 
     linkOAuthAccount,
+    
+    updatePassword,
+
+
+    revokeRefreshTokenByHash,
+
+deleteExpiredRefreshTokens,
+
+deleteExpiredVerificationTokens,
+
+deleteExpiredPasswordResetTokens,
+
+findVerificationTokenWithUser,
+
+findRefreshTokenWithUser
 
 };

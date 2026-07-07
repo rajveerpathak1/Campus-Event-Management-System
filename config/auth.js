@@ -47,4 +47,7 @@ module.exports = {
   frontendUrl:
     process.env.CLIENT_URL,
 
+    backendUrl:
+process.env.BACKEND_URL,
+
 };
