@@ -12,6 +12,7 @@ const swaggerSpec = require("./config/swagger");
 
 
 const authRoutes = require("./routes/authRoutes");
+const oauthRoutes = require("./routes/oauthRoutes");
 const eventRoutes = require("./routes/eventRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
@@ -20,6 +21,11 @@ const cookieParser = require("cookie-parser");
 
 
 const errorHandler = require("./middlewares/errorMiddleware");
+
+const passport = require("./config/passport");
+
+app.use(passport.initialize());
+
 
 const createApp = ({ sessionMiddleware }) => {
   const app = express();
@@ -107,6 +113,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
   //  API Versioning
   app.use("/api/v1/auth", authRoutes);
+  app.use("/api/v1/oauth",oauthRoutes);
   app.use("/api/v1/events", eventRoutes);
   app.use("/api/v1/students", studentRoutes);
   app.use("/api/v1/admin", adminRoutes);
