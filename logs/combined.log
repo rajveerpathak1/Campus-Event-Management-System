@@ -85,3 +85,14 @@
 {"level":"info","message":"::1 - - [07/Jul/2026:15:33:27 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 200 338 \"-\" \"bruno-runtime/3.5.1\"","timestamp":"2026-07-07T15:33:27.586Z"}
 {"level":"info","message":"::1 - - [07/Jul/2026:15:33:32 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 200 338 \"-\" \"bruno-runtime/3.5.1\"","timestamp":"2026-07-07T15:33:32.926Z"}
 {"level":"info","message":"HTTP server closed","timestamp":"2026-07-07T15:34:00.058Z"}
+{"level":"info","message":"Server running on port 5000","timestamp":"2026-07-08T19:09:16.679Z"}
+{"level":"info","message":"::1 - - [08/Jul/2026:19:09:41 +0000] \"GET /api/v1/oauth/google HTTP/1.1\" 302 0 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0\"","timestamp":"2026-07-08T19:09:41.624Z"}
+{"level":"info","message":"::1 - - [08/Jul/2026:19:12:41 +0000] \"GET /api/v1/oauth/google HTTP/1.1\" 302 0 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0\"","timestamp":"2026-07-08T19:12:41.108Z"}
+{"level":"info","message":"::1 - - [08/Jul/2026:19:13:00 +0000] \"GET /api/v1/oauth/google HTTP/1.1\" 302 0 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0\"","timestamp":"2026-07-08T19:13:00.827Z"}
+{"level":"info","message":"::1 - - [08/Jul/2026:19:15:41 +0000] \"GET /api/v1/oauth/google/ HTTP/1.1\" 302 0 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0\"","timestamp":"2026-07-08T19:15:41.658Z"}
+{"level":"info","message":"HTTP server closed","timestamp":"2026-07-08T19:16:56.617Z"}
+{"level":"info","message":"Server running on port 5000","timestamp":"2026-07-08T19:17:29.253Z"}
+{"level":"info","message":"::1 - - [08/Jul/2026:19:19:25 +0000] \"GET /api/v1/oauth/google HTTP/1.1\" 302 0 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0\"","timestamp":"2026-07-08T19:19:25.692Z"}
+{"level":"info","message":"::1 - - [08/Jul/2026:19:20:38 +0000] \"GET /api/v1/oauth/google/callback?iss=https%3A%2F%2Faccounts.google.com&code=4%2F0AdkVLPzRP03dTiU0mbyc9G-V-qe8gLO74m4CeoCfVDn24DGEMuAspWj3U6c71Ki71no6fw&scope=email+profile+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+openid&authuser=0&prompt=consent HTTP/1.1\" 302 295 \"https://accounts.google.com/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0\"","timestamp":"2026-07-08T19:20:38.596Z"}
+{"level":"info","message":"Server running on port 5000","timestamp":"2026-07-08T20:23:18.882Z"}
+{"level":"info","message":"HTTP server closed","timestamp":"2026-07-08T20:23:20.978Z"}

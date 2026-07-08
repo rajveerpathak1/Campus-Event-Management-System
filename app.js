@@ -24,7 +24,6 @@ const errorHandler = require("./middlewares/errorMiddleware");
 
 const passport = require("./config/passport");
 
-app.use(passport.initialize());
 
 
 const createApp = ({ sessionMiddleware }) => {
@@ -49,6 +48,9 @@ const createApp = ({ sessionMiddleware }) => {
 
   //  Compression
   app.use(compression());
+
+  app.use(passport.initialize());
+
 
   //  Logging
   if (process.env.NODE_ENV === "development") {

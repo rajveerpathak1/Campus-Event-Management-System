@@ -32,18 +32,17 @@ passport.use(
 
         ) => {
 
-            return done(null, {
+           const email = profile.emails?.[0]?.value;
 
-                googleId:
-                    profile.id,
+if (!email) {
+    return done(new Error("Google account has no email."));
+}
 
-                email:
-                    profile.emails[0].value,
-
-                name:
-                    profile.displayName,
-
-            });
+return done(null, {
+    googleId: profile.id,
+    email,
+    name: profile.displayName,
+});
 
         }
 

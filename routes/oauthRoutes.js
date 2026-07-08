@@ -7,29 +7,22 @@ const {
 
 } = require("../controllers/oauthController");
 
+
+
+
 const router = express.Router();
 
 router.get(
 
     "/google",
 
-    passport.authenticate(
+    passport.authenticate("google", {
 
-        "google",
+    scope: ["profile", "email"],
 
-        {
+    state: true,
 
-            scope: [
-
-                "profile",
-
-                "email",
-
-            ],
-
-        }
-
-    )
+})
 
 );
 

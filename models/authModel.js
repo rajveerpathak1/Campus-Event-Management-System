@@ -9,6 +9,7 @@ const createUser = async ({
   email,
   passwordHash,
   role = "student",
+  emailVerified = false,
 }) => {
 
   const db = getDB();
@@ -20,7 +21,8 @@ const createUser = async ({
         name,
         email,
         password_hash,
-        role
+        role,
+        email_verified_at
     )
 
     VALUES
@@ -28,7 +30,8 @@ const createUser = async ({
         $1,
         $2,
         $3,
-        $4
+        $4,
+        $5
     )
 
     RETURNING *
@@ -38,6 +41,7 @@ const createUser = async ({
       email.toLowerCase(),
       passwordHash,
       role,
+      emailVerified ? new Date() : null,
     ]
   );
 
@@ -777,6 +781,47 @@ rt.ip_address,
 };
 
 
+/* ============================================================
+   FIND USER BY OAUTH ACCOUNT
+============================================================ */
+
+const findUserByOAuthAccount = async ({
+    provider,
+    providerUserId,
+}) => {
+
+    const db = getDB();
+
+    const result = await db.query(
+        `
+        SELECT
+
+            u.*
+
+        FROM oauth_accounts oa
+
+        JOIN users u
+            ON oa.user_id = u.id
+
+        WHERE
+
+            oa.provider = $1
+
+        AND oa.provider_user_id = $2
+
+        LIMIT 1
+        `,
+        [
+            provider,
+            providerUserId,
+        ]
+    );
+
+    return result.rows[0] || null;
+
+};
+
+
 
 module.exports = {
 
@@ -837,6 +882,7 @@ deleteExpiredPasswordResetTokens,
 
 findVerificationTokenWithUser,
 
-findRefreshTokenWithUser
+findRefreshTokenWithUser,
+findUserByOAuthAccount,
 
 };
