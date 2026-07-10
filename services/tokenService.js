@@ -51,7 +51,7 @@ const generateRefreshToken = ({
 
             sub: userId,
 
-            // jti: tokenId,
+            jti: crypto.randomUUID(),
 
             type: "refresh",
 

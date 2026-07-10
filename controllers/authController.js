@@ -397,7 +397,7 @@ const login = asyncHandler(async (req, res) => {
 const refresh = asyncHandler(async (req, res) => {
 
   const refreshToken =
-    req.cookies?.refreshToken;
+    req.cookies?.refreshToken || req.body?.refreshToken;
 
   if (!refreshToken) {
     throw new ApiError(
@@ -506,7 +506,7 @@ const refresh = asyncHandler(async (req, res) => {
 const logout = asyncHandler(async (req, res) => {
 
   const refreshToken =
-    req.cookies?.refreshToken;
+    req.cookies?.refreshToken || req.body?.refreshToken;
 
   if (refreshToken) {
 

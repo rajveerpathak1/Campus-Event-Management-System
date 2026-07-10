@@ -93,8 +93,14 @@ test("student auth + JWT token flow", async () => {
 
     assert.equal(res.status, 200);
     assert.ok(res.json.accessToken, "JWT Access token not returned");
-
-    const accessToken = res.json.accessToken;
+    
+    let accessToken = res.json.accessToken;
+    
+    // Extract refreshToken cookie if present
+    const setCookie = res.headers["set-cookie"];
+    const cookie = setCookie ? setCookie[0].split(";")[0] : "";
+    assert.ok(cookie || setCookie, "Refresh token cookie not returned");
+    const rawRefreshToken = cookie.split("=")[1];
 
     /* ---------- GET ME ---------- */
     res = await request({
@@ -107,6 +113,113 @@ test("student auth + JWT token flow", async () => {
     assert.equal(res.status, 200);
     assert.equal(res.json.data.email, email);
     assert.equal(res.json.data.role, "student");
+    const studentId = res.json.data.id;
+
+    /* ---------- REFRESH TOKEN (BODY FALLBACK) ---------- */
+    res = await request({
+      port,
+      method: "POST",
+      urlPath: "/api/v1/auth/refresh",
+      body: { refreshToken: rawRefreshToken },
+    });
+    assert.equal(res.status, 200);
+    assert.ok(res.json.accessToken);
+
+    const setCookie2 = res.headers["set-cookie"];
+    const cookie2 = setCookie2 ? setCookie2[0].split(";")[0] : "";
+    assert.ok(cookie2 || setCookie2, "New refresh token cookie not returned");
+
+    /* ---------- REFRESH TOKEN (COOKIE) ---------- */
+    res = await request({
+      port,
+      method: "POST",
+      urlPath: "/api/v1/auth/refresh",
+      cookie: cookie2,
+    });
+    assert.equal(res.status, 200);
+    assert.ok(res.json.accessToken);
+    accessToken = res.json.accessToken;
+
+    const setCookie3 = res.headers["set-cookie"];
+    const cookie3 = setCookie3 ? setCookie3[0].split(";")[0] : "";
+    assert.ok(cookie3 || setCookie3, "Latest refresh token cookie not returned");
+
+    /* ---------- STUDENT PROFILE ---------- */
+    res = await request({
+      port,
+      method: "GET",
+      urlPath: "/api/v1/students/profile",
+      token: accessToken,
+    });
+    assert.equal(res.status, 200);
+    assert.equal(res.json.data.email, email);
+
+    /* ---------- CREATE EVENT (PROMOTING STUDENT TO ADMIN TEMPORARILY) ---------- */
+    await pool.query("UPDATE users SET role = 'admin' WHERE id = $1", [studentId]);
+    res = await request({
+      port,
+      method: "POST",
+      urlPath: "/api/v1/admin/events",
+      token: accessToken, // Now has admin permissions
+      body: {
+        title: "Test Comprehensive Event",
+        description: "Testing student registrations",
+        event_date: "2027-08-01T12:00:00.000Z",
+        capacity: 10,
+      },
+    });
+    assert.equal(res.status, 201);
+    const eventId = res.json.data.id;
+    assert.ok(eventId);
+
+    /* ---------- PUBLISH EVENT ---------- */
+    res = await request({
+      port,
+      method: "POST",
+      urlPath: `/api/v1/admin/events/${eventId}/publish`,
+      token: accessToken,
+    });
+    assert.equal(res.status, 200);
+
+    // Demote user back to student
+    await pool.query("UPDATE users SET role = 'student' WHERE id = $1", [studentId]);
+
+    /* ---------- GET EVENTS (PUBLIC) ---------- */
+    res = await request({
+      port,
+      method: "GET",
+      urlPath: "/api/v1/events",
+    });
+    assert.equal(res.status, 200);
+    assert.ok(res.json.data.length > 0);
+
+    /* ---------- REGISTER FOR EVENT ---------- */
+    res = await request({
+      port,
+      method: "POST",
+      urlPath: `/api/v1/events/${eventId}/register`,
+      token: accessToken,
+    });
+    assert.equal(res.status, 201);
+
+    /* ---------- VIEW MY REGISTRATIONS ---------- */
+    res = await request({
+      port,
+      method: "GET",
+      urlPath: "/api/v1/students/registrations",
+      token: accessToken,
+    });
+    assert.equal(res.status, 200);
+    assert.equal(res.json.data[0].event_id, eventId);
+
+    /* ---------- UNREGISTER FROM EVENT ---------- */
+    res = await request({
+      port,
+      method: "DELETE",
+      urlPath: `/api/v1/events/${eventId}/unregister`,
+      token: accessToken,
+    });
+    assert.equal(res.status, 200);
 
     /* ---------- LOGOUT ---------- */
     res = await request({
@@ -114,6 +227,7 @@ test("student auth + JWT token flow", async () => {
       method: "POST",
       urlPath: "/api/v1/auth/logout",
       token: accessToken,
+      cookie: cookie3,
     });
 
     assert.equal(res.status, 200);

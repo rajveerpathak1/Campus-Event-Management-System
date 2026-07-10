@@ -28,11 +28,50 @@ const router = express.Router();
  * @swagger
  * /events:
  *   get:
- *     summary: Get all events
+ *     summary: Get all published events (public route)
  *     tags: [Events]
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Case-insensitive search query matching event titles
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of records per page (max 50)
  *     responses:
  *       200:
- *         description: List of events
+ *         description: List of published events retrieved successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 page:
+ *                   type: integer
+ *                   example: 1
+ *                 limit:
+ *                   type: integer
+ *                   example: 10
+ *                 total:
+ *                   type: integer
+ *                   example: 1
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Event'
  */
 // GET all events (public, but can personalize if logged in)
 router.get("/", getEvents);
@@ -67,7 +106,7 @@ router.get(
  * @swagger
  * /events/{id}:
  *   get:
- *     summary: Get event by ID
+ *     summary: Get a single published event by ID (public route)
  *     tags: [Events]
  *     parameters:
  *       - in: path
@@ -75,9 +114,24 @@ router.get(
  *         required: true
  *         schema:
  *           type: integer
+ *         description: The event database ID
  *     responses:
  *       200:
- *         description: Event details
+ *         description: Published event details retrieved successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/Event'
+ *       400:
+ *         description: Invalid event ID provided.
+ *       404:
+ *         description: Published event not found or is soft-deleted.
  */
 // GET single event
 router.get("/:id", validateEventIdParam, getEvent);
