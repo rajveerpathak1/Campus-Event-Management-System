@@ -40,7 +40,7 @@ const shutdown = async (signal) => {
       process.exit(0);
     });
 
-    // Force shutdown after timeout
+
     setTimeout(() => {
       logger.error(" Forced shutdown");
       process.exit(1);
@@ -50,7 +50,7 @@ const shutdown = async (signal) => {
   }
 };
 
-// Process events
+
 process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
 
