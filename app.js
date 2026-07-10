@@ -26,7 +26,7 @@ const passport = require("./config/passport");
 
 
 
-const createApp = ({ sessionMiddleware }) => {
+const createApp = () => {
   const app = express();
 
   app.set("trust proxy", 1);
@@ -91,10 +91,7 @@ const createApp = ({ sessionMiddleware }) => {
     })
   );
 
-  //  Session
-  if (sessionMiddleware) {
-    app.use(sessionMiddleware);
-  }
+
 
   // swagger docs
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));

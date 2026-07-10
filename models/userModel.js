@@ -3,7 +3,7 @@ const { getDB } = require("../config/db");
 const findUserByEmail = async email => {
   const db = getDB();
   const result = await db.query(
-    "SELECT id, name, email, password, role FROM users WHERE email = $1",
+    "SELECT id, name, email, password_hash AS password, role FROM users WHERE email = $1",
     [email]
   );
   return result.rows[0];
@@ -12,7 +12,7 @@ const findUserByEmail = async email => {
 const createUser = async ({ name, email, password, role }) => {
   const db = getDB();
   const result = await db.query(
-    `INSERT INTO users (name, email, password, role)
+    `INSERT INTO users (name, email, password_hash, role)
      VALUES ($1, $2, $3, $4)
      RETURNING id, name, email, role`,
     [name, email, password, role]

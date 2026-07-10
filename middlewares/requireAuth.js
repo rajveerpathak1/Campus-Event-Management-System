@@ -1,14 +1,82 @@
+const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
 
-const requireAuth = (req, res, next) => {
-  if (!req.session || !req.session.user) {
-    return next(new ApiError(401, "Unauthorized - Please login"));
-  }
+const {
+    extractBearerToken,
+    verifyAccessToken,
+} = require("../services/tokenService");
 
-  // Attach user to request
-  req.user = req.session.user;
+const {
+    findUserById,
+} = require("../models/authModel");
 
-  next();
-};
+module.exports = asyncHandler(
 
-module.exports = requireAuth;
+    async (req, res, next) => {
+
+        const token =
+            extractBearerToken(req);
+
+        if (!token) {
+
+            throw new ApiError(
+                401,
+                "Access token missing"
+            );
+
+        }
+
+        let payload;
+
+        try {
+
+            payload =
+                verifyAccessToken(token);
+
+        } catch {
+
+            throw new ApiError(
+                401,
+                "Invalid or expired access token"
+            );
+
+        }
+
+        const user =
+            await findUserById(payload.sub);
+
+        if (!user) {
+
+            throw new ApiError(
+                401,
+                "User not found"
+            );
+
+        }
+
+        if (user.is_active === false) {
+
+            throw new ApiError(
+                403,
+                "Account is disabled"
+            );
+
+        }
+
+        req.user = {
+
+            id: user.id,
+
+            email: user.email,
+
+            role: user.role,
+
+            name: user.name,
+
+        };
+
+        next();
+
+    }
+
+);

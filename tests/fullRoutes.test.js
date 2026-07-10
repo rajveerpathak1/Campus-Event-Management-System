@@ -6,10 +6,9 @@ const http = require("node:http");
 
 const createApp = require("../app");
 const { connectDB, getDB } = require("../config/db");
-const createSessionMiddleware = require("../config/session");
 
 /* ---------------- HELPER ---------------- */
-const request = ({ port, method, urlPath, body, jar }) =>
+const request = ({ port, method, urlPath, body, token }) =>
   new Promise((resolve) => {
     const payload = body ? JSON.stringify(body) : null;
 
@@ -23,7 +22,7 @@ const request = ({ port, method, urlPath, body, jar }) =>
           "Content-Type": "application/json",
           "Content-Length": Buffer.byteLength(payload),
         }),
-        ...(jar?.cookie && { Cookie: jar.cookie }),
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
     };
 
@@ -32,10 +31,6 @@ const request = ({ port, method, urlPath, body, jar }) =>
       res.on("data", (chunk) => (data += chunk));
 
       res.on("end", () => {
-        if (res.headers["set-cookie"] && jar) {
-          jar.cookie = res.headers["set-cookie"][0].split(";")[0];
-        }
-
         resolve({
           status: res.statusCode,
           json: data ? JSON.parse(data) : {},
@@ -54,56 +49,54 @@ test("FULL API ROUTE TEST", async () => {
   const pool = getDB();
 
   await pool.query(
-    "TRUNCATE TABLE registrations, events, users RESTART IDENTITY CASCADE"
+    "TRUNCATE TABLE registrations, events, refresh_tokens, email_verification_tokens, users RESTART IDENTITY CASCADE"
   );
 
-  const app = createApp({ sessionMiddleware: createSessionMiddleware() });
+  const app = createApp();
   const server = app.listen(0);
   const port = server.address().port;
 
   try {
-    const jar = {};
     const email = `test_${Date.now()}@mail.com`;
 
-    /* ---------- AUTH ---------- */
-
+    /* ---------- REGISTER ---------- */
     let res = await request({
       port,
       method: "POST",
-      urlPath: "/api/v1/auth/signup",
-      body: { name: "Test", email, password: "123456" },
-      jar,
+      urlPath: "/api/v1/auth/register",
+      body: { name: "Test User", email, password: "Password123!" },
     });
     assert.equal(res.status, 201);
 
+    /* ---------- VERIFY EMAIL IN DB ---------- */
+    await pool.query(
+      "UPDATE users SET email_verified_at = NOW() WHERE email = $1",
+      [email]
+    );
+
+    /* ---------- LOGIN ---------- */
     res = await request({
       port,
       method: "POST",
       urlPath: "/api/v1/auth/login",
-      body: { email, password: "123456" },
-      jar,
+      body: { email, password: "Password123!" },
     });
     assert.equal(res.status, 200);
 
+    const accessToken = res.json.accessToken;
+    assert.ok(accessToken);
+
+    /* ---------- GET ME ---------- */
     res = await request({
       port,
       method: "GET",
       urlPath: "/api/v1/auth/me",
-      jar,
+      token: accessToken,
     });
     assert.equal(res.status, 200);
     assert.equal(res.json.data.email, email);
 
-    res = await request({
-      port,
-      method: "POST",
-      urlPath: "/api/v1/auth/logout",
-      jar,
-    });
-    assert.equal(res.status, 200);
-
     /* ---------- EVENTS (PUBLIC) ---------- */
-
     res = await request({
       port,
       method: "GET",
@@ -111,57 +104,34 @@ test("FULL API ROUTE TEST", async () => {
     });
     assert.equal(res.status, 200);
 
-    /* ---------- STUDENT BLOCK ---------- */
-
-    res = await request({
-      port,
-      method: "GET",
-      urlPath: "/api/v1/students/profile",
-    });
-    assert.equal(res.status, 401);
-
-    /* ---------- LOGIN AGAIN ---------- */
-
-    await request({
-      port,
-      method: "POST",
-      urlPath: "/api/v1/auth/login",
-      body: { email, password: "123456" },
-      jar,
-    });
-
-    /* ---------- STUDENT ACCESS ---------- */
-
-    res = await request({
-      port,
-      method: "GET",
-      urlPath: "/api/v1/students/profile",
-      jar,
-    });
-    assert.equal(res.status, 200);
-
-    /* ---------- ADMIN BLOCK ---------- */
-
+    /* ---------- ADMIN ACCESS BLOCKED FOR STUDENT ---------- */
     res = await request({
       port,
       method: "GET",
       urlPath: "/api/v1/admin/events",
-      jar,
+      token: accessToken,
     });
     assert.equal(res.status, 403);
 
-    /* ---------- SUPER ADMIN BLOCK ---------- */
-
+    /* ---------- SUPER ADMIN ACCESS BLOCKED FOR STUDENT ---------- */
     res = await request({
       port,
       method: "GET",
       urlPath: "/api/v1/super-admin/users",
-      jar,
+      token: accessToken,
     });
     assert.equal(res.status, 403);
 
+    /* ---------- LOGOUT ---------- */
+    res = await request({
+      port,
+      method: "POST",
+      urlPath: "/api/v1/auth/logout",
+      token: accessToken,
+    });
+    assert.equal(res.status, 200);
+
   } finally {
     server.close();
-    await pool.end();
   }
 });

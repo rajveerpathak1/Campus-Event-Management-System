@@ -31,26 +31,29 @@ const sendEmail = async ({
   subject,
   html,
 }) => {
-
-  console.log("API KEY:", process.env.RESEND_API_KEY ? "Loaded" : "Missing");
-  console.log("FROM:", process.env.EMAIL_FROM);
-  console.log("TO:", to);
-
-  const { data, error } = await resend.emails.send({
-    from: process.env.EMAIL_FROM,
-    to,
-    subject,
-    html,
-  });
-
-  console.log("Resend Data:", data);
-  console.log("Resend Error:", error);
-
-  if (error) {
-    throw new Error(error.message);
+  if (process.env.NODE_ENV === "test" || !process.env.RESEND_API_KEY) {
+    console.log(`[Email Sim] To: ${to} | Subject: ${subject}`);
+    return { id: "simulated-email-id" };
   }
 
-  return data;
+  try {
+    const { data, error } = await resend.emails.send({
+      from: process.env.EMAIL_FROM || "onboarding@resend.dev",
+      to,
+      subject,
+      html,
+    });
+
+    if (error) {
+      console.warn("Resend Email Warning:", error.message);
+      return { error };
+    }
+
+    return data;
+  } catch (err) {
+    console.warn("Email Send Exception:", err.message);
+    return null;
+  }
 };
 
 /* =====================================================
@@ -113,6 +116,50 @@ const sendPasswordResetEmail = async ({
 
 };
 
+/* =====================================================
+   REGISTRATION EMAIL
+===================================================== */
+
+const sendRegistrationEmail = async ({
+  to,
+  name,
+  eventTitle,
+  eventDate,
+}) => {
+  const html = `
+    <h2>Hello ${name},</h2>
+    <p>You have successfully registered for <strong>${eventTitle}</strong> scheduled on ${new Date(eventDate).toUTCString()}.</p>
+    <p>We look forward to seeing you there!</p>
+  `;
+
+  return sendEmail({
+    to,
+    subject: `Registration Confirmed: ${eventTitle}`,
+    html,
+  });
+};
+
+/* =====================================================
+   UNREGISTER EMAIL
+===================================================== */
+
+const sendUnregisterEmail = async ({
+  to,
+  name,
+  eventTitle,
+}) => {
+  const html = `
+    <h2>Hello ${name},</h2>
+    <p>You have been unregistered from <strong>${eventTitle}</strong>.</p>
+  `;
+
+  return sendEmail({
+    to,
+    subject: `Unregistered from ${eventTitle}`,
+    html,
+  });
+};
+
 module.exports = {
 
   sendEmail,
@@ -120,5 +167,9 @@ module.exports = {
   sendVerificationEmail,
 
   sendPasswordResetEmail,
+
+  sendRegistrationEmail,
+
+  sendUnregisterEmail,
 
 };

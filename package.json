@@ -2,9 +2,10 @@
   "name": "campus-event-management-system",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node db/migrate.js && node server.js"
+    "start": "node db/migrate.js && node server.js",
+    "seed:superadmin": "node db/seedSuperAdmin.js"
   },
   "repository": {
     "type": "git",

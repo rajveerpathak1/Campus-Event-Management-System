@@ -2,7 +2,6 @@ require("dotenv").config();
 const logger = require("./utils/logger");
 const createApp = require("./app");
 const { connectDB, disconnectDB } = require("./config/db");
-const createSessionMiddleware = require("./config/session");
 
 const PORT = process.env.PORT || 5000;
 
@@ -12,13 +11,10 @@ const startServer = async () => {
   try {
     await connectDB();
 
-    const sessionMiddleware = createSessionMiddleware();
-    const app = createApp({ sessionMiddleware });
+    const app = createApp();
 
     server = app.listen(PORT, () => {
-      const logger = require("./utils/logger");
-
-logger.info(`Server running on port ${PORT}`);
+      logger.info(`Server running on port ${PORT}`);
     });
 
   } catch (err) {

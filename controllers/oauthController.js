@@ -155,9 +155,9 @@ generateRefreshToken({
             generateDeviceId(),
 
         deviceName:
-            req.headers[
-                "sec-ch-ua-platform"
-            ] || "Unknown",
+req.headers["sec-ch-ua-platform"] ||
+req.headers["user-agent"] ||
+"Unknown Device",
 
         userAgent:
             req.headers[

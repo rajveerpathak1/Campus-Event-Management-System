@@ -323,41 +323,48 @@ const getMyRegistrations = async (
 /* ALL REGISTRATIONS */
 /* ================================================= */
 
-const getAllRegistrations =
-  async () => {
-    const pool = getDB();
+const getAllRegistrations = async ({ eventId, limit, offset } = {}) => {
+  const pool = getDB();
 
-    const result = await pool.query(
-      `
-      SELECT
-        r.id AS registration_id,
+  const conditions = [];
+  const values = [];
+  let idx = 1;
 
-        r.created_at AS registered_at,
+  if (eventId) {
+    conditions.push(`r.event_id = $${idx++}`);
+    values.push(eventId);
+  }
 
-        u.name AS user_name,
+  const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
-        u.email AS user_email,
+  let limitOffsetClause = "";
+  if (typeof limit === "number" && typeof offset === "number") {
+    limitOffsetClause = `LIMIT $${idx++} OFFSET $${idx++}`;
+    values.push(limit, offset);
+  }
 
-        e.id AS event_id,
+  const result = await pool.query(
+    `
+    SELECT
+      r.id AS registration_id,
+      r.created_at AS registered_at,
+      u.name AS user_name,
+      u.email AS user_email,
+      e.id AS event_id,
+      e.title AS event_title,
+      e.event_date
+    FROM registrations r
+    JOIN users u ON r.user_id = u.id
+    JOIN events e ON r.event_id = e.id
+    ${whereClause}
+    ORDER BY r.created_at DESC
+    ${limitOffsetClause}
+    `,
+    values
+  );
 
-        e.title AS event_title,
-
-        e.event_date
-
-      FROM registrations r
-
-      JOIN users u
-        ON r.user_id = u.id
-
-      JOIN events e
-        ON r.event_id = e.id
-
-      ORDER BY r.created_at DESC
-      `
-    );
-
-    return result.rows;
-  };
+  return result.rows;
+};
 
 /* ================================================= */
 /* EXPORTS */

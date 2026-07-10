@@ -107,7 +107,7 @@ router.patch("/users/:id/role", asyncHandler(async (req, res) => {
 
 /* -------------------- DELETE USER -------------------- */
 router.delete("/users/:id", asyncHandler(async (req, res) => {
-  const db = getDB();
+  const pool = getDB();
   const id = Number(req.params.id);
 
   if (!id) throw new ApiError(400, "Invalid ID");
@@ -116,12 +116,14 @@ router.delete("/users/:id", asyncHandler(async (req, res) => {
     throw new ApiError(400, "Cannot delete yourself");
   }
 
+  const client = await pool.connect();
+
   try {
-    await db.query("BEGIN");
+    await client.query("BEGIN");
 
-    await db.query("DELETE FROM registrations WHERE user_id = $1", [id]);
+    await client.query("DELETE FROM registrations WHERE user_id = $1", [id]);
 
-    const result = await db.query(
+    const result = await client.query(
       "DELETE FROM users WHERE id = $1 RETURNING id",
       [id]
     );
@@ -130,7 +132,7 @@ router.delete("/users/:id", asyncHandler(async (req, res) => {
       throw new ApiError(404, "User not found");
     }
 
-    await db.query("COMMIT");
+    await client.query("COMMIT");
 
     res.json({
       success: true,
@@ -138,8 +140,10 @@ router.delete("/users/:id", asyncHandler(async (req, res) => {
     });
 
   } catch (err) {
-    await db.query("ROLLBACK");
+    await client.query("ROLLBACK");
     throw err;
+  } finally {
+    client.release();
   }
 }));
 
