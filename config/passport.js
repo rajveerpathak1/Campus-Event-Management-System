@@ -16,8 +16,7 @@ passport.use(
                 authConfig.googleClientSecret,
 
             callbackURL:
-                authConfig.googleCallbackUrl,
-
+                authConfig.googleCallbackUrl || "/api/v1/oauth/google/callback",
         },
 
         async (
@@ -32,17 +31,17 @@ passport.use(
 
         ) => {
 
-           const email = profile.emails?.[0]?.value;
+            const email = profile.emails?.[0]?.value;
 
-if (!email) {
-    return done(new Error("Google account has no email."));
-}
+            if (!email) {
+                return done(new Error("Google account has no email."));
+            }
 
-return done(null, {
-    googleId: profile.id,
-    email,
-    name: profile.displayName,
-});
+            return done(null, {
+                googleId: profile.id,
+                email,
+                name: profile.displayName,
+            });
 
         }
 

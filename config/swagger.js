@@ -10,7 +10,18 @@ const options = {
     },
     servers: [
       {
+        url: process.env.BACKEND_URL 
+          ? (process.env.BACKEND_URL.endsWith("/api/v1") ? process.env.BACKEND_URL : `${process.env.BACKEND_URL}/api/v1`)
+          : "http://localhost:5000/api/v1",
+        description: "Current environment server",
+      },
+      {
+        url: "https://campus-event-management-system-lhpe.onrender.com/api/v1",
+        description: "Production server (Render)",
+      },
+      {
         url: "http://localhost:5000/api/v1",
+        description: "Local development server",
       },
     ],
 
