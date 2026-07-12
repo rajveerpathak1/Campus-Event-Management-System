@@ -8,6 +8,7 @@
 const express = require("express");
 
 const requireAuth = require("../middlewares/requireAuth");
+const optionalAuth = require("../middlewares/optionalAuth");
 const { authorizeRoles } = require("../middlewares/roleMiddleware");
 
 const {
@@ -74,7 +75,7 @@ const router = express.Router();
  *                     $ref: '#/components/schemas/Event'
  */
 // GET all events (public, but can personalize if logged in)
-router.get("/", getEvents);
+router.get("/", optionalAuth, getEvents);
 
 
 
@@ -134,7 +135,7 @@ router.get(
  *         description: Published event not found or is soft-deleted.
  */
 // GET single event
-router.get("/:id", validateEventIdParam, getEvent);
+router.get("/:id", optionalAuth, validateEventIdParam, getEvent);
 
 
 

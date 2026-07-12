@@ -43,7 +43,7 @@ const getEvent = asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
   if (!id) throw new ApiError(400, "Invalid event ID");
 
-  const event = await getEventByIdStudent(id);
+  const event = await getEventByIdStudent(id, req.user?.id || null);
   if (!event) throw new ApiError(404, "Event not found");
 
   res.status(200).json({ success: true, data: event });

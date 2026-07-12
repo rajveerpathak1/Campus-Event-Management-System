@@ -19,6 +19,8 @@ const {
 
   validateRegister,
   validateLogin,
+  validateForgotPassword,
+  validateResetPassword,
 
 } = require("../validators/authValidator");
 
@@ -164,6 +166,7 @@ router.get(
 // Resend Verification Email
 router.post(
   "/resend-verification",
+  validateForgotPassword,
   resendVerification
 );
 
@@ -300,6 +303,7 @@ router.post(
 // Forgot Password
 router.post(
   "/forgot-password",
+  validateForgotPassword,
   forgotPassword
 );
 
@@ -347,6 +351,7 @@ router.post(
 // Reset Password
 router.post(
   "/reset-password",
+  validateResetPassword,
   resetPassword
 );
 

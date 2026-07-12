@@ -49,18 +49,36 @@ const searchEvents = async ({ search = "", limit, offset, userId }) => {
 };
 
 /* ==================== STUDENT GET EVENT ==================== */
-const getEventByIdStudent = async (id) => {
+const getEventByIdStudent = async (id, userId = null) => {
   const db = getDB();
 
   const result = await db.query(
     `
-    SELECT *
-    FROM events
-    WHERE id = $1
-      AND is_deleted = false
-      AND status = 'published'
+    SELECT
+      e.id,
+      e.title,
+      e.description,
+      e.event_date,
+      e.capacity,
+      e.status,
+      e.created_at,
+      e.updated_at,
+      COUNT(r.id)::int AS "registeredCount",
+      EXISTS (
+        SELECT 1
+        FROM registrations r2
+        WHERE r2.event_id = e.id
+          AND r2.user_id = $2
+      ) AS "isRegistered"
+    FROM events e
+    LEFT JOIN registrations r
+      ON r.event_id = e.id
+    WHERE e.id = $1
+      AND e.is_deleted = false
+      AND e.status = 'published'
+    GROUP BY e.id
     `,
-    [id]
+    [id, userId]
   );
 
   return result.rows[0];
