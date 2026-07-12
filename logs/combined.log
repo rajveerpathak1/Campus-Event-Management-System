@@ -2665,3 +2665,23 @@
 {"level":"info","message":"::1 - - [12/Jul/2026:04:32:25 +0000] \"GET /api/v1/events?page=1&limit=5 HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36\"","timestamp":"2026-07-12T04:32:25.518Z"}
 {"level":"info","message":"::1 - - [12/Jul/2026:04:32:28 +0000] \"OPTIONS /api/v1/admin/registrations HTTP/1.1\" 204 0 \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36\"","timestamp":"2026-07-12T04:32:28.507Z"}
 {"level":"info","message":"::1 - - [12/Jul/2026:04:32:28 +0000] \"GET /api/v1/admin/registrations HTTP/1.1\" 304 - \"http://localhost:5173/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36\"","timestamp":"2026-07-12T04:32:28.514Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:58:50 +0000] \"POST /api/v1/auth/register HTTP/1.1\" 201 79 \"-\" \"-\"","timestamp":"2026-07-12T19:58:50.804Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:58:51 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 200 361 \"-\" \"-\"","timestamp":"2026-07-12T19:58:51.062Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:58:51 +0000] \"GET /api/v1/auth/me HTTP/1.1\" 200 206 \"-\" \"-\"","timestamp":"2026-07-12T19:58:51.072Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:58:51 +0000] \"POST /api/v1/auth/refresh HTTP/1.1\" 200 273 \"-\" \"-\"","timestamp":"2026-07-12T19:58:51.088Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:58:51 +0000] \"POST /api/v1/auth/refresh HTTP/1.1\" 200 273 \"-\" \"-\"","timestamp":"2026-07-12T19:58:51.099Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:58:51 +0000] \"GET /api/v1/students/profile HTTP/1.1\" 200 107 \"-\" \"-\"","timestamp":"2026-07-12T19:58:51.106Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:58:51 +0000] \"POST /api/v1/admin/events HTTP/1.1\" 201 309 \"-\" \"-\"","timestamp":"2026-07-12T19:58:51.121Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:58:51 +0000] \"POST /api/v1/admin/events/1/publish HTTP/1.1\" 200 287 \"-\" \"-\"","timestamp":"2026-07-12T19:58:51.130Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:58:51 +0000] \"GET /api/v1/events HTTP/1.1\" 200 279 \"-\" \"-\"","timestamp":"2026-07-12T19:58:51.146Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:58:52 +0000] \"POST /api/v1/events/1/register HTTP/1.1\" 201 80 \"-\" \"-\"","timestamp":"2026-07-12T19:58:52.568Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:58:52 +0000] \"GET /api/v1/students/registrations HTTP/1.1\" 200 235 \"-\" \"-\"","timestamp":"2026-07-12T19:58:52.576Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:58:53 +0000] \"DELETE /api/v1/events/1/unregister HTTP/1.1\" 200 175 \"-\" \"-\"","timestamp":"2026-07-12T19:58:53.890Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:58:53 +0000] \"POST /api/v1/auth/logout HTTP/1.1\" 200 53 \"-\" \"-\"","timestamp":"2026-07-12T19:58:53.916Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:59:03 +0000] \"POST /api/v1/auth/register HTTP/1.1\" 201 79 \"-\" \"-\"","timestamp":"2026-07-12T19:59:03.786Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:59:04 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 200 351 \"-\" \"-\"","timestamp":"2026-07-12T19:59:04.047Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:59:04 +0000] \"POST /api/v1/auth/register HTTP/1.1\" 201 79 \"-\" \"-\"","timestamp":"2026-07-12T19:59:04.643Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:59:04 +0000] \"GET /api/v1/super-admin/users HTTP/1.1\" 200 195 \"-\" \"-\"","timestamp":"2026-07-12T19:59:04.716Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:59:04 +0000] \"PATCH /api/v1/super-admin/users/2/role HTTP/1.1\" 200 72 \"-\" \"-\"","timestamp":"2026-07-12T19:59:04.725Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:59:04 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 200 347 \"-\" \"-\"","timestamp":"2026-07-12T19:59:04.846Z"}
+{"level":"info","message":"::ffff:127.0.0.1 - - [12/Jul/2026:19:59:04 +0000] \"POST /api/v1/admin/events HTTP/1.1\" 201 292 \"-\" \"-\"","timestamp":"2026-07-12T19:59:04.855Z"}

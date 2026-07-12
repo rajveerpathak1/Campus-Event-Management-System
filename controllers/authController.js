@@ -314,6 +314,13 @@ const login = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Invalid email or password");
   }
 
+  if (!user.password_hash) {
+    throw new ApiError(
+      400,
+      "This account uses Google Sign-In. Please sign in with Google."
+    );
+  }
+
   const isValidPassword = await verifyPassword(
     user.password_hash,
     password
