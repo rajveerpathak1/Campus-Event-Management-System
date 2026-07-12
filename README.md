@@ -215,8 +215,8 @@ COMMIT;
 
 ## 📄 API Documentation (Swagger)
 
-Swagger API documentation is served interactively on local running servers at:
-👉 **[http://localhost:5000/api-docs](http://localhost:5000/api-docs)**
+Swagger API documentation is served interactively on deployed running servers at:
+👉 **[click here](https://campus-event-management-system-lhpe.onrender.com/api-docs)**
 
 Includes request and response examples for all authentication, OAuth, event search, registration, and administrative workflows.
 
